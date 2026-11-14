@@ -1,5 +1,5 @@
-# Contrat d'API AgroRot
-# AgroRot - REST API Contract v2.0
+# Contrat d'API AgriRot
+# AgriRot - REST API Contract v2.0
 
 
 
