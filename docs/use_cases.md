@@ -1,785 +1,765 @@
-# AgroRot - Spécification des Cas d'Utilisation
+# AgroRot - Use Case Specification
 
-**NASA Space Apps Challenge 2026**
-**Défi :** « Changement de terrain : Adapter les fermes avec les données de la NASA »
-
-Projet AgroRot - fiches détaillées avec scénarios alternatifs et exceptions
-
-| | |
-|---|---|
-| **Version** | 2.0 (révisée et complétée) |
-| **Date** | 14 novembre 2026 |
-| **Documents liés** | Cahier des Charges v2 ; Contrat d'API REST v2 |
-
-**Principales évolutions**
-
-- Scénarios alternatifs et exceptions détaillés pour les 12 cas d'utilisation d'origine
-- Nouveaux cas : CU13 connexion et déconnexion, CU14 modifier ou supprimer une parcelle, CU15 gérer la ferme, CU16 aide « Comment lire ces résultats »
-- Matrice des droits par rôle ; relations entre cas ; règles de gestion et lien avec l'API pour chaque fiche
-- Correction : le conseiller est en lecture seule sur les saisies locales (CU6 et CU7), cohérent avec CU2
-
----
-
-## Sommaire
+## Table of Contents
 
 1. Introduction
-   - 1.1 Acteurs et multiplicité
-   - 1.2 Matrice des droits
-   - 1.3 Liste des cas d'utilisation
-   - 1.4 Relations entre cas d'utilisation
+   - 1.1 Actors and multiplicity
+   - 1.2 Rights matrix
+   - 1.3 List of use cases
+   - 1.4 Relationships between use cases
    - 1.5 Conventions
-2. Module 1 : Gestion des comptes et de la ferme
-   - CU1 - Créer un compte et une exploitation agricole
-   - CU13 - Se connecter et se déconnecter
-   - CU2 - Gérer les membres d'une ferme (multiplicité des acteurs)
-   - CU3 - Consulter le tableau de bord partagé
-   - CU15 - Gérer la ferme (renommer, transférer, quitter, supprimer)
-3. Module 2 : Cartographie et diagnostic NASA
-   - CU4 - Délimiter une parcelle sur la carte interactive
-   - CU14 - Modifier ou supprimer une parcelle
-   - CU5 - Consulter le diagnostic climatique et environnemental NASA
-4. Module 3 : Configuration locale et priorités
-   - CU6 - Renseigner les données locales et corriger les données NASA
-   - CU7 - Définir ses priorités et ses contraintes opérationnelles
-5. Module 4 : Recommandation, simulation et validation
-   - CU8 - Générer et comparer les 3 stratégies de rotation
-   - CU9 - Consulter la fiche d'explication détaillée d'une stratégie
-   - CU10 - Simuler un scénario climatique (« Et si... »)
-   - CU11 - Modifier manuellement une culture et recalculer
-6. Module 5 : Suivi, pédagogie et export
-   - CU12 - Enregistrer, annoter et exporter la stratégie retenue
-   - CU16 - Consulter l'aide « Comment lire ces résultats »
-7. Annexe A - Synthèse des erreurs par cas d'utilisation
+2. Module 1: Account and farm management
+   - UC1 - Create an account and a farm
+   - UC13 - Log in and log out
+   - UC2 - Manage farm members (multiplicity of actors)
+   - UC3 - View the shared dashboard
+   - UC15 - Manage the farm (rename, transfer, leave, delete)
+3. Module 2: Mapping and NASA diagnosis
+   - UC4 - Outline a parcel on the interactive map
+   - UC14 - Edit or delete a parcel
+   - UC5 - View the NASA climate and environmental diagnosis
+4. Module 3: Local configuration and priorities
+   - UC6 - Enter local data and correct NASA data
+   - UC7 - Define priorities and operational constraints
+5. Module 4: Recommendation, simulation and validation
+   - UC8 - Generate and compare the 3 rotation strategies
+   - UC9 - View a strategy's detailed explanation sheet
+   - UC10 - Simulate a climate scenario ("What if...")
+   - UC11 - Manually change a crop and recalculate
+6. Module 5: Follow-up, education and export
+   - UC12 - Save, annotate and export the selected strategy
+   - UC16 - View the "How to read these results" help
+7. Appendix A - Summary of errors by use case
 
 ---
 
 ## 1. Introduction
 
-### 1.1 Acteurs et multiplicité
+### 1.1 Actors and multiplicity
 
-Une exploitation agricole est créée par 1 agriculteur principal (propriétaire et gestionnaire), qui peut associer 0 à N co-exploitants (associés, membres de la famille) et 0 à N conseillers agricoles locaux (agronomes, techniciens). Un même utilisateur peut avoir un rôle différent d'une ferme à l'autre.
+A farm is created by 1 main farmer (owner and manager), who can associate 0 to N co-farmers (partners, family members) and 0 to N local agricultural advisors (agronomists, technicians). The same user can have a different role from one farm to another.
 
-| Acteur | Code de rôle | Multiplicité | Rôle |
+| Actor | Role code | Multiplicity | Role |
 |---|---|---|---|
-| Agriculteur principal | `owner` | 1 par ferme | Crée et gère la ferme, décide du plan final. |
-| Co-exploitant | `co_farmer` | 0 à N | Édite parcelles et saisies, ajoute des observations. |
-| Conseiller agricole | `advisor` | 0 à N | Consulte, simule, ajoute un avis de validation. |
-| Systèmes externes | - | - | NASA POWER (appel direct) ; fichiers pré-agrégés IMERG, SMAP, NDVI ; SRTM ; moteur `agrorot_core`. |
+| Main farmer | `owner` | 1 per farm | Creates and manages the farm, decides on the final plan. |
+| Co-farmer | `co_farmer` | 0 to N | Edits parcels and inputs, adds observations. |
+| Agricultural advisor | `advisor` | 0 to N | Views, simulates, adds a validation opinion. |
+| External systems | - | - | NASA POWER (direct call); pre-aggregated IMERG, SMAP, NDVI files; SRTM; `agrorot_core` engine. |
 
-### 1.2 Matrice des droits
+### 1.2 Rights matrix
 
-| Action (au sein d'une ferme) | Principal (`owner`) | Co-exploitant (`co_farmer`) | Conseiller (`advisor`) |
+| Action (within a farm) | Main farmer (`owner`) | Co-farmer (`co_farmer`) | Advisor (`advisor`) |
 |---|---|---|---|
-| Consulter tableau de bord, parcelles, diagnostic NASA, stratégies, historique | Oui | Oui | Oui |
-| Calculer, comparer, simuler et modifier une stratégie (sans l'enregistrer) - CU8 à CU11 | Oui | Oui | Oui |
-| Créer / modifier une parcelle - CU4, CU14 | Oui | Oui | Non |
-| Supprimer une parcelle - CU14 | Oui | Non | Non |
-| Saisies locales, corrections NASA, historique des cultures, priorités et contraintes - CU6, CU7 | Oui | Oui | Non (lecture seule) |
-| Retenir une stratégie - CU12 | Oui | Oui | Non |
-| Ajouter une observation terrain - CU12 | Oui | Oui | Non |
-| Ajouter un avis de validation - CU12 | Non | Non | Oui |
-| Exporter la fiche PDF - CU12 | Oui | Oui | Oui |
-| Gérer les membres (ajouter, changer le rôle, retirer) - CU2 | Oui | Non | Non |
-| Renommer, supprimer la ferme, transférer la propriété - CU15 | Oui | Non | Non |
-| Quitter la ferme - CU15 | Non (transférer d'abord) | Oui | Oui |
+| View dashboard, parcels, NASA diagnosis, strategies, history | Yes | Yes | Yes |
+| Calculate, compare, simulate and modify a strategy (without saving it) - UC8 to UC11 | Yes | Yes | Yes |
+| Create / edit a parcel - UC4, UC14 | Yes | Yes | No |
+| Delete a parcel - UC14 | Yes | No | No |
+| Local inputs, NASA corrections, crop history, priorities and constraints - UC6, UC7 | Yes | Yes | No (read-only) |
+| Select a strategy - UC12 | Yes | Yes | No |
+| Add a field observation - UC12 | Yes | Yes | No |
+| Add a validation opinion - UC12 | No | No | Yes |
+| Export the PDF sheet - UC12 | Yes | Yes | Yes |
+| Manage members (add, change role, remove) - UC2 | Yes | No | No |
+| Rename, delete the farm, transfer ownership - UC15 | Yes | No | No |
+| Leave the farm - UC15 | No (transfer first) | Yes | Yes |
 
-### 1.3 Liste des cas d'utilisation
+### 1.3 List of use cases
 
-| Module | Cas d'utilisation | Prio. |
+| Module | Use cases | Prio. |
 |---|---|---|
-| 1. Comptes et ferme | CU1 Créer un compte et une exploitation ; CU13 Se connecter et se déconnecter ; CU2 Gérer les membres ; CU3 Consulter le tableau de bord ; CU15 Gérer la ferme | M (CU15 : S) |
-| 2. Cartographie et diagnostic | CU4 Délimiter une parcelle ; CU14 Modifier ou supprimer une parcelle ; CU5 Consulter le diagnostic NASA | M (CU14 : S) |
-| 3. Configuration locale | CU6 Renseigner les données locales ; CU7 Définir priorités et contraintes | M |
-| 4. Recommandation | CU8 Générer et comparer 3 stratégies ; CU9 Fiche d'explication ; CU10 Simuler un scénario climatique ; CU11 Modifier une culture et recalculer | M |
-| 5. Suivi et pédagogie | CU12 Enregistrer, annoter et exporter ; CU16 Aide « Comment lire ces résultats » | M |
+| 1. Accounts and farm | UC1 Create an account and a farm; UC13 Log in and log out; UC2 Manage members; UC3 View the dashboard; UC15 Manage the farm | M (UC15: S) |
+| 2. Mapping and diagnosis | UC4 Outline a parcel; UC14 Edit or delete a parcel; UC5 View the NASA diagnosis | M (UC14: S) |
+| 3. Local configuration | UC6 Enter local data; UC7 Define priorities and constraints | M |
+| 4. Recommendation | UC8 Generate and compare 3 strategies; UC9 Explanation sheet; UC10 Simulate a climate scenario; UC11 Change a crop and recalculate | M |
+| 5. Follow-up and education | UC12 Save, annotate and export; UC16 "How to read these results" help | M |
 
-### 1.4 Relations entre cas d'utilisation
+### 1.4 Relationships between use cases
 
-| Cas | Relation | Cas lié |
+| Case | Relationship | Related case |
 |---|---|---|
-| CU13 | Préalable de tous les autres cas (session ouverte) | CU1 à CU16 |
-| CU8 | Dépend des données produites par | CU5, CU6, CU7 |
-| CU9, CU10, CU11 | Étendent (à partir d'un résultat affiché) | CU8 |
-| CU12 | Dépend d'une stratégie issue de | CU8 ou CU11 |
-| CU16 | Accessible depuis | CU5, CU9, CU12 |
-| CU14 | Invalide le diagnostic et les calculs de | CU5, CU8 |
+| UC13 | Prerequisite for all other cases (open session) | UC1 to UC16 |
+| UC8 | Depends on data produced by | UC5, UC6, UC7 |
+| UC9, UC10, UC11 | Extend (from a displayed result) | UC8 |
+| UC12 | Depends on a strategy coming from | UC8 or UC11 |
+| UC16 | Accessible from | UC5, UC9, UC12 |
+| UC14 | Invalidates the diagnosis and calculations of | UC5, UC8 |
 
 ### 1.5 Conventions
 
-- **Scénarios alternatifs (A)** : variantes qui aboutissent encore au but du cas. **Exceptions (E)** : situations d'erreur ; le code d'erreur de l'API est indiqué entre parenthèses (voir Contrat d'API v2, section 3).
-- **Avertissements** : certains cas ne produisent pas d'erreur mais un avertissement affiché sans bloquer (champ `warnings` des réponses).
-- **Règles R1 à R9** : définies dans le Document du modèle mathématique. **Priorités** : M indispensable, S important, C souhaitable.
-- **Plan B** : l'indicateur `data_source_status` vaut `live`, `fallback_cache` ou `fallback_local` ; un bandeau d'information est affiché hors cas `live`.
+- **Alternative scenarios (A)**: variants that still achieve the goal of the use case. **Exceptions (E)**: error situations; the API error code is shown in parentheses (see API Contract v2, section 3).
+- **Warnings**: some cases produce no error but a non-blocking warning (the `warnings` field of the responses).
+- **Rules R1 to R9**: defined in the Mathematical Model document. **Priorities**: M essential, S important, C desirable.
+- **Plan B**: the `data_source_status` indicator is `live`, `fallback_cache` or `fallback_local`; an information banner is displayed in all non-`live` cases.
 
 ---
 
-## 2. Module 1 : Gestion des comptes et de la ferme
+## 2. Module 1: Account and farm management
 
-### CU1 - Créer un compte et une exploitation agricole
+### UC1 - Create an account and a farm
 
 | | |
 |---|---|
-| **Acteurs** | Principal : agriculteur principal. |
-| **Priorité / besoin** | M - BF1 |
-| **Préconditions** | L'utilisateur accède à l'application web (navigateur ou PWA mobile) et n'a pas de session active. |
+| **Actors** | Primary: main farmer. |
+| **Priority / need** | M - BF1 |
+| **Preconditions** | The user accesses the web application (browser or mobile PWA) and has no active session. |
 
-**Scénario nominal**
+**Main scenario**
 
-1. L'utilisateur ouvre l'écran d'inscription et saisit son nom complet, son identifiant (email ou numéro de téléphone) et son mot de passe.
-2. Il renseigne sa ferme : nom de l'exploitation, pays et région (ex. périphérie de Yaoundé).
-3. Le système valide les données, crée le compte et la ferme dans une seule transaction, génère les jetons JWT et ouvre le tableau de bord.
+1. The user opens the registration screen and enters their full name, their identifier (email or phone number) and their password.
+2. They fill in their farm details: farm name, country and region (e.g. outskirts of Yaoundé).
+3. The system validates the data, creates the account and the farm in a single transaction, generates the JWT tokens and opens the dashboard.
 
-**Scénarios alternatifs**
+**Alternative scenarios**
 
-- **A1 - Compte existant** - l'identifiant est déjà enregistré : création bloquée, message explicite, redirection vers la connexion (CU13).
-- **A2 - Identifiant par téléphone** - le numéro est normalisé au format international (ex. +237...) avant la vérification d'unicité.
-- **A3 - Inscription sur invitation** - l'utilisateur arrive par un lien d'invitation (CU2-A2) : l'étape « ferme » est sautée, la ferme invitante lui est associée avec le rôle proposé ; il peut créer sa propre ferme plus tard.
-- **A4 - Région non couverte** - la région choisie n'a pas de catalogue de cultures : la ferme est créée, un message précise que les stratégies ne seront disponibles qu'après l'ajout de la région (MVP : `cm_yaounde`).
+- **A1 - Existing account** - the identifier is already registered: creation blocked, explicit message, redirection to login (UC13).
+- **A2 - Phone identifier** - the number is normalized to international format (e.g. +237...) before the uniqueness check.
+- **A3 - Registration by invitation** - the user arrives via an invitation link (UC2-A2): the "farm" step is skipped, the inviting farm is associated with them with the proposed role; they can create their own farm later.
+- **A4 - Unsupported region** - the chosen region has no crop catalog: the farm is created, and a message states that strategies will only be available once the region is added (MVP: `cm_yaounde`).
 
-**Exceptions et erreurs**
+**Exceptions and errors**
 
-- **E1 - Champs invalides** - mot de passe trop court (moins de 8 caractères), champ obligatoire vide, identifiant mal formé : l'erreur est surlignée avant l'appel API ; côté serveur, `VALIDATION_ERROR` (422) avec la liste des champs.
-- **E2 - Identifiant déjà utilisé (serveur)** - `ACCOUNT_ALREADY_EXISTS` (409) si le contrôle client a été contourné.
-- **E3 - Échec réseau** - les valeurs saisies sont conservées dans le formulaire ; message invitant à réessayer.
-- **E4 - Échec de création de la ferme** - la transaction est annulée : ni compte ni ferme n'existent ; message d'erreur général (`INTERNAL_ERROR`, 500).
-- **E5 - Trop de tentatives** - `TOO_MANY_REQUESTS` (429) avec délai d'attente affiché.
+- **E1 - Invalid fields** - password too short (fewer than 8 characters), empty required field, malformed identifier: the error is highlighted before the API call; server-side, `VALIDATION_ERROR` (422) with the list of fields.
+- **E2 - Identifier already used (server)** - `ACCOUNT_ALREADY_EXISTS` (409) if the client-side check was bypassed.
+- **E3 - Network failure** - the entered values are kept in the form; message inviting the user to retry.
+- **E4 - Farm creation failure** - the transaction is rolled back: neither account nor farm exists; general error message (`INTERNAL_ERROR`, 500).
+- **E5 - Too many attempts** - `TOO_MANY_REQUESTS` (429) with the waiting time displayed.
 
-**Règles de gestion**
+**Business rules**
 
-- Le mot de passe est stocké haché. Le nom de la ferme est obligatoire (3 à 80 caractères).
-- Le créateur reçoit le rôle `owner` ; une ferme n'a qu'un seul `owner`.
+- The password is stored hashed. The farm name is required (3 to 80 characters).
+- The creator receives the `owner` role; a farm has only one `owner`.
 
-**Postconditions** : le compte et la ferme sont enregistrés ; l'utilisateur est authentifié avec les droits complets d'administration sur sa ferme.
+**Postconditions**: the account and the farm are saved; the user is authenticated with full administration rights on their farm.
 
-**Accès API** : `POST /auth/register`, `POST /farms`
+**API access**: `POST /auth/register`, `POST /farms`
 
 ---
 
-### CU13 - Se connecter et se déconnecter
+### UC13 - Log in and log out
 
 | | |
 |---|---|
-| **Acteurs** | Principal : tous les utilisateurs. |
-| **Priorité / besoin** | M - BF1 |
-| **Préconditions** | L'utilisateur possède un compte et n'a pas de session active (connexion) ou a une session ouverte (déconnexion). |
+| **Actors** | Primary: all users. |
+| **Priority / need** | M - BF1 |
+| **Preconditions** | The user has an account and no active session (login) or has an open session (logout). |
 
-**Scénario nominal**
+**Main scenario**
 
-1. L'utilisateur saisit son identifiant et son mot de passe.
-2. Le système vérifie les identifiants et renvoie un jeton d'accès et un jeton de renouvellement.
-3. L'application ouvre le tableau de bord (CU3).
+1. The user enters their identifier and password.
+2. The system verifies the credentials and returns an access token and a refresh token.
+3. The application opens the dashboard (UC3).
 
-**Scénarios alternatifs**
+**Alternative scenarios**
 
-- **A1 - Renouvellement silencieux** - le jeton d'accès expire pendant l'utilisation : l'application obtient un nouveau jeton avec le jeton de renouvellement, sans interrompre l'utilisateur.
-- **A2 - Déconnexion** - l'utilisateur se déconnecte ; le jeton de renouvellement est révoqué, les données locales sensibles sont effacées, retour à l'écran de connexion.
-- **A3 - Mot de passe oublié** (C, hors MVP si aucun service d'envoi) - l'utilisateur demande un lien de réinitialisation par email ou SMS ; le lien à usage unique est valable 1 heure ; un nouveau mot de passe est défini.
-- **A4 - Retour à la page demandée** - après une reconnexion forcée, l'utilisateur revient à l'écran qu'il consultait.
+- **A1 - Silent refresh** - the access token expires during use: the application obtains a new token using the refresh token, without interrupting the user.
+- **A2 - Logout** - the user logs out; the refresh token is revoked, sensitive local data is erased, return to the login screen.
+- **A3 - Forgotten password** (C, out of MVP if no sending service) - the user requests a reset link by email or SMS; the single-use link is valid for 1 hour; a new password is set.
+- **A4 - Return to the requested page** - after a forced re-login, the user returns to the screen they were viewing.
 
-**Exceptions et erreurs**
+**Exceptions and errors**
 
-- **E1 - Identifiants incorrects** - `INVALID_CREDENTIALS` (401) ; message volontairement générique (ne dit pas si l'identifiant existe).
-- **E2 - Trop de tentatives** - `TOO_MANY_REQUESTS` (429) après 5 échecs en 15 minutes ; délai indiqué par l'en-tête `Retry-After`.
-- **E3 - Jeton de renouvellement expiré ou révoqué** - `TOKEN_EXPIRED` ou `TOKEN_INVALID` (401) : retour à l'écran de connexion.
-- **E4 - Échec réseau** - message « Connexion impossible, réessayez » ; aucun état partiel conservé.
+- **E1 - Incorrect credentials** - `INVALID_CREDENTIALS` (401); deliberately generic message (does not reveal whether the identifier exists).
+- **E2 - Too many attempts** - `TOO_MANY_REQUESTS` (429) after 5 failures in 15 minutes; delay indicated by the `Retry-After` header.
+- **E3 - Expired or revoked refresh token** - `TOKEN_EXPIRED` or `TOKEN_INVALID` (401): return to the login screen.
+- **E4 - Network failure** - message "Unable to connect, please try again"; no partial state kept.
 
-**Règles de gestion**
+**Business rules**
 
-- Durées proposées : jeton d'accès 60 minutes, jeton de renouvellement 7 jours.
+- Proposed durations: access token 60 minutes, refresh token 7 days.
 
-**Postconditions** : session ouverte ou fermée selon le cas ; aucune donnée métier modifiée.
+**Postconditions**: session opened or closed as applicable; no business data modified.
 
-**Accès API** : `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`, `GET /auth/me`
+**API access**: `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`, `GET /auth/me`
 
 ---
 
-### CU2 - Gérer les membres d'une ferme (multiplicité des acteurs)
+### UC2 - Manage farm members (multiplicity of actors)
 
 | | |
 |---|---|
-| **Acteurs** | Principal : agriculteur principal. Secondaires (0 à N) : co-exploitants, conseillers agricoles. |
-| **Priorité / besoin** | M - BF1, BF9 |
-| **Préconditions** | L'agriculteur principal est authentifié et possède au moins une ferme. |
+| **Actors** | Primary: main farmer. Secondary (0 to N): co-farmers, agricultural advisors. |
+| **Priority / need** | M - BF1, BF9 |
+| **Preconditions** | The main farmer is authenticated and owns at least one farm. |
 
-**Scénario nominal**
+**Main scenario**
 
-1. L'agriculteur ouvre « Membres de la ferme » et clique sur « Ajouter un membre ».
-2. Il saisit l'identifiant d'un associé ou d'un conseiller et choisit son rôle : co-exploitant (édition des parcelles et saisies) ou conseiller agricole (consultation, simulation, avis de validation).
-3. Le système associe le membre à la ferme et lui ouvre l'accès partagé ; la liste des membres est mise à jour.
+1. The farmer opens "Farm members" and clicks "Add a member".
+2. They enter the identifier of a partner or advisor and choose their role: co-farmer (editing of parcels and inputs) or agricultural advisor (viewing, simulation, validation opinion).
+3. The system associates the member with the farm and grants them shared access; the member list is updated.
 
-**Scénarios alternatifs**
+**Alternative scenarios**
 
-- **A1 - Modification ou retrait** - l'agriculteur principal peut à tout moment changer le rôle d'un membre ou révoquer son accès.
-- **A2 - Utilisateur introuvable : invitation** - aucun compte ne correspond : le système propose d'envoyer un lien d'invitation ; le membre apparaît avec le statut « en attente » ; à l'inscription (CU1-A3), il devient actif. L'invitation expire après 7 jours.
-- **A3 - Gérer les invitations** - l'agriculteur peut renvoyer ou annuler une invitation en attente.
-- **A4 - Un membre quitte la ferme** - un co-exploitant ou un conseiller se retire lui-même (CU15).
-- **A5 - Même personne dans plusieurs fermes** - un conseiller peut être membre de plusieurs fermes ; chacune apparaît dans son tableau de bord (CU3).
+- **A1 - Change or removal** - the main farmer can at any time change a member's role or revoke their access.
+- **A2 - User not found: invitation** - no account matches: the system offers to send an invitation link; the member appears with the status "pending"; upon registration (UC1-A3), they become active. The invitation expires after 7 days.
+- **A3 - Manage invitations** - the farmer can resend or cancel a pending invitation.
+- **A4 - A member leaves the farm** - a co-farmer or an advisor withdraws on their own (UC15).
+- **A5 - Same person on several farms** - an advisor can be a member of several farms; each one appears in their dashboard (UC3).
 
-**Exceptions et erreurs**
+**Exceptions and errors**
 
-- **E1 - Membre déjà associé** - `MEMBER_ALREADY_EXISTS` (409).
-- **E2 - Auto-ajout** - le propriétaire ne peut pas s'ajouter lui-même : `VALIDATION_ERROR` (422).
-- **E3 - Retrait ou rétrogradation du propriétaire** - `LAST_OWNER` (409) : il faut d'abord transférer la propriété (CU15).
-- **E4 - Rôle invalide** - `VALIDATION_ERROR` (422) ; seuls `co_farmer` et `advisor` sont attribuables.
-- **E5 - Action par un non-propriétaire** - `FORBIDDEN_ROLE` (403).
-- **E6 - Accès révoqué pendant une consultation** - la requête suivante du membre renvoie `FORBIDDEN_ROLE` ou `NOT_FARM_MEMBER` (403) : redirection vers son tableau de bord avec un message.
-- **E7 - Échec d'envoi de l'invitation** - le membre reste « en attente » ; l'agriculteur peut copier le lien et le partager lui-même.
+- **E1 - Member already associated** - `MEMBER_ALREADY_EXISTS` (409).
+- **E2 - Self-add** - the owner cannot add themselves: `VALIDATION_ERROR` (422).
+- **E3 - Removal or demotion of the owner** - `LAST_OWNER` (409): ownership must be transferred first (UC15).
+- **E4 - Invalid role** - `VALIDATION_ERROR` (422); only `co_farmer` and `advisor` can be assigned.
+- **E5 - Action by a non-owner** - `FORBIDDEN_ROLE` (403).
+- **E6 - Access revoked during a session** - the member's next request returns `FORBIDDEN_ROLE` or `NOT_FARM_MEMBER` (403): redirection to their dashboard with a message.
+- **E7 - Invitation sending failure** - the member remains "pending"; the farmer can copy the link and share it themselves.
 
-**Règles de gestion**
+**Business rules**
 
-- Un utilisateur n'a qu'une appartenance par ferme. Les droits suivent la matrice du paragraphe 1.2.
+- A user has only one membership per farm. Rights follow the matrix in section 1.2.
 
-**Postconditions** : la liste des membres est à jour ; les membres associés voient la ferme sur leur propre tableau de bord.
+**Postconditions**: the member list is up to date; the associated members see the farm on their own dashboard.
 
-**Accès API** : `GET/POST /farms/{id}/members`, `PATCH/DELETE /farms/{id}/members/{member_id}`
+**API access**: `GET/POST /farms/{id}/members`, `PATCH/DELETE /farms/{id}/members/{member_id}`
 
 ---
 
-### CU3 - Consulter le tableau de bord partagé
+### UC3 - View the shared dashboard
 
 | | |
 |---|---|
-| **Acteurs** | Principaux : agriculteur principal, co-exploitants, conseillers. |
-| **Priorité / besoin** | M - BF1 |
-| **Préconditions** | L'utilisateur est connecté avec un jeton JWT valide. |
+| **Actors** | Primary: main farmer, co-farmers, advisors. |
+| **Priority / need** | M - BF1 |
+| **Preconditions** | The user is logged in with a valid JWT token. |
 
-**Scénario nominal**
+**Main scenario**
 
-1. Le système charge toutes les fermes dont l'utilisateur est propriétaire ou membre.
-2. Pour la ferme sélectionnée, il affiche la carte récapitulative : contours des parcelles, superficie totale, dernière stratégie retenue par parcelle.
+1. The system loads all farms of which the user is owner or member.
+2. For the selected farm, it displays the summary map: parcel outlines, total area, last strategy selected per parcel.
 
-**Scénarios alternatifs**
+**Alternative scenarios**
 
-- **A1 - Première visite sans parcelle** - un guide d'accueil invite à tracer un premier champ (CU4) ; pour un conseiller, message « aucune parcelle pour le moment ».
-- **A2 - Aucune ferme** - propriétaire : invitation à créer une ferme ; conseiller ou co-exploitant sans invitation : message « en attente d'une invitation ».
-- **A3 - Plusieurs fermes** - un sélecteur de ferme est affiché ; la dernière ferme consultée est mémorisée.
-- **A4 - Parcelle sans stratégie retenue** - la mention « aucune stratégie retenue » est affichée avec un bouton vers CU8.
-- **A5 - Parcelle à compléter** - un indicateur signale les parcelles dont les saisies locales ou l'historique sont incomplets (CU6).
+- **A1 - First visit with no parcel** - a welcome guide invites the user to outline a first field (UC4); for an advisor, message "no parcel yet".
+- **A2 - No farm** - owner: invitation to create a farm; advisor or co-farmer without an invitation: message "waiting for an invitation".
+- **A3 - Several farms** - a farm selector is displayed; the last farm viewed is remembered.
+- **A4 - Parcel with no selected strategy** - the note "no strategy selected" is displayed with a button to UC8.
+- **A5 - Parcel to be completed** - an indicator flags parcels whose local inputs or history are incomplete (UC6).
 
-**Exceptions et erreurs**
+**Exceptions and errors**
 
-- **E1 - Session expirée** - `TOKEN_EXPIRED` (401) : tentative de renouvellement automatique ; en cas d'échec, redirection vers la connexion sans perte des saisies en cours.
-- **E2 - Accès à la ferme révoqué** - `NOT_FARM_MEMBER` (403) : la ferme disparaît de la liste, message d'information.
-- **E3 - Échec de chargement** - écran d'erreur avec bouton « Réessayer » ; si disponible, la dernière version en cache est affichée en lecture seule avec un bandeau.
+- **E1 - Expired session** - `TOKEN_EXPIRED` (401): automatic refresh attempt; if it fails, redirection to login without loss of the inputs in progress.
+- **E2 - Farm access revoked** - `NOT_FARM_MEMBER` (403): the farm disappears from the list, information message.
+- **E3 - Loading failure** - error screen with a "Retry" button; if available, the latest cached version is displayed read-only with a banner.
 
-**Règles de gestion**
+**Business rules**
 
-- Les parcelles sont affichées selon les droits ; aucune donnée d'une ferme non liée n'est visible.
+- Parcels are displayed according to rights; no data from an unlinked farm is visible.
 
-**Postconditions** : l'utilisateur a une vue d'ensemble à jour de l'exploitation et peut sélectionner une parcelle pour l'analyser.
+**Postconditions**: the user has an up-to-date overview of the farm and can select a parcel to analyze.
 
-**Accès API** : `GET /farms`, `GET /farms/{id}`, `GET /farms/{id}/parcels`
+**API access**: `GET /farms`, `GET /farms/{id}`, `GET /farms/{id}/parcels`
 
 ---
 
-### CU15 - Gérer la ferme (renommer, transférer, quitter, supprimer)
+### UC15 - Manage the farm (rename, transfer, leave, delete)
 
 | | |
 |---|---|
-| **Acteurs** | Principal : agriculteur principal. Secondaires : co-exploitants et conseillers (pour quitter). |
-| **Priorité / besoin** | S - BF10 |
-| **Préconditions** | L'utilisateur est membre de la ferme concernée. |
+| **Actors** | Primary: main farmer. Secondary: co-farmers and advisors (to leave). |
+| **Priority / need** | S - BF10 |
+| **Preconditions** | The user is a member of the farm concerned. |
 
-**Scénario nominal**
+**Main scenario**
 
-1. L'agriculteur principal ouvre les paramètres de la ferme.
-2. Il renomme la ferme ou modifie sa région, et enregistre.
-3. Le système met à jour la ferme et affiche le nouveau nom pour tous les membres.
+1. The main farmer opens the farm settings.
+2. They rename the farm or change its region, and save.
+3. The system updates the farm and displays the new name to all members.
 
-**Scénarios alternatifs**
+**Alternative scenarios**
 
-- **A1 - Transférer la propriété** - l'agriculteur choisit un co-exploitant actif et confirme ; le co-exploitant devient `owner`, l'ancien propriétaire devient co-exploitant.
-- **A2 - Quitter la ferme** - un co-exploitant ou un conseiller quitte la ferme après confirmation ; ses notes restent visibles avec son nom.
-- **A3 - Supprimer la ferme** - le propriétaire tape le nom de la ferme pour confirmer ; la ferme, ses parcelles, saisies, stratégies et notes sont supprimées définitivement ; les membres sont informés à leur prochaine connexion.
-- **A4 - Changement de région** - les stratégies déjà enregistrées sont conservées mais marquées « calculées avec une autre région » ; un recalcul est proposé.
+- **A1 - Transfer ownership** - the farmer chooses an active co-farmer and confirms; the co-farmer becomes `owner`, the former owner becomes a co-farmer.
+- **A2 - Leave the farm** - a co-farmer or an advisor leaves the farm after confirmation; their notes remain visible with their name.
+- **A3 - Delete the farm** - the owner types the farm name to confirm; the farm, its parcels, inputs, strategies and notes are permanently deleted; members are informed at their next login.
+- **A4 - Region change** - already saved strategies are kept but marked "calculated with another region"; a recalculation is offered.
 
-**Exceptions et erreurs**
+**Exceptions and errors**
 
-- **E1 - Propriétaire qui veut quitter** - `LAST_OWNER` (409) : transférer la propriété ou supprimer la ferme.
-- **E2 - Transfert vers un conseiller ou un utilisateur non membre** - `VALIDATION_ERROR` (422) : seul un co-exploitant actif peut devenir propriétaire.
-- **E3 - Confirmation incorrecte** - la suppression est refusée tant que le nom saisi ne correspond pas.
-- **E4 - Droits insuffisants** - `FORBIDDEN_ROLE` (403) pour renommer, transférer ou supprimer par un non-propriétaire.
-- **E5 - Modification simultanée** - `VERSION_CONFLICT` (409) : l'écran est rechargé avec les valeurs à jour.
-- **E6 - Ferme introuvable** - `FARM_NOT_FOUND` (404).
+- **E1 - Owner wanting to leave** - `LAST_OWNER` (409): transfer ownership or delete the farm.
+- **E2 - Transfer to an advisor or a non-member** - `VALIDATION_ERROR` (422): only an active co-farmer can become owner.
+- **E3 - Incorrect confirmation** - deletion is refused as long as the name entered does not match.
+- **E4 - Insufficient rights** - `FORBIDDEN_ROLE` (403) for renaming, transferring or deleting by a non-owner.
+- **E5 - Concurrent modification** - `VERSION_CONFLICT` (409): the screen is reloaded with the up-to-date values.
+- **E6 - Farm not found** - `FARM_NOT_FOUND` (404).
 
-**Règles de gestion**
+**Business rules**
 
-- La suppression est définitive et non annulable.
+- Deletion is permanent and cannot be undone.
 
-**Postconditions** : la ferme est mise à jour, transférée, quittée ou supprimée selon le cas.
+**Postconditions**: the farm is updated, transferred, left or deleted as applicable.
 
-**Accès API** : `PATCH/DELETE /farms/{id}`, `POST /farms/{id}/transfer-ownership`, `DELETE /farms/{id}/members/me`
+**API access**: `PATCH/DELETE /farms/{id}`, `POST /farms/{id}/transfer-ownership`, `DELETE /farms/{id}/members/me`
 
 ---
 
-## 3. Module 2 : Cartographie et diagnostic NASA
+## 3. Module 2: Mapping and NASA diagnosis
 
-### CU4 - Délimiter une parcelle sur la carte interactive
+### UC4 - Outline a parcel on the interactive map
 
 | | |
 |---|---|
-| **Acteurs** | Principaux : agriculteur principal, co-exploitants. |
-| **Priorité / besoin** | M - BF2 |
-| **Préconditions** | L'utilisateur est authentifié, a le droit d'édition et se trouve sur le tableau de bord d'une ferme. |
+| **Actors** | Primary: main farmer, co-farmers. |
+| **Priority / need** | M - BF2 |
+| **Preconditions** | The user is authenticated, has editing rights and is on a farm's dashboard. |
 
-**Scénario nominal**
+**Main scenario**
 
-1. L'utilisateur clique sur « Nouvelle parcelle » et centre la carte avec le GPS du téléphone ou la recherche géographique.
-2. Avec l'outil de dessin (Leaflet.draw), il pose les sommets du champ, ferme le polygone et saisit un nom (ex. « Parcelle Nord »).
-3. Le serveur valide la géométrie (Shapely), calcule le centroïde et la superficie en hectares, extrait l'altitude et la pente (SRTM) et enregistre la parcelle au format GeoJSON.
+1. The user clicks "New parcel" and centers the map using the phone's GPS or the geographic search.
+2. Using the drawing tool (Leaflet.draw), they place the field's vertices, close the polygon and enter a name (e.g. "North Parcel").
+3. The server validates the geometry (Shapely), computes the centroid and the area in hectares, extracts the elevation and slope (SRTM) and saves the parcel in GeoJSON format.
 
-**Scénarios alternatifs**
+**Alternative scenarios**
 
-- **A1 - Géolocalisation refusée ou indisponible** - accès GPS refusé, ou ordinateur sans HTTPS : la carte s'ouvre sur le centre de la région configurée (Yaoundé) avec une barre de recherche.
-- **A2 - Recherche sans résultat** - message « lieu introuvable » ; l'utilisateur peut déplacer la carte à la main.
-- **A3 - Correction du tracé avant validation** - annuler le dernier sommet, effacer et recommencer, déplacer un sommet ; la superficie estimée s'affiche en direct.
-- **A4 - Chevauchement avec une parcelle existante** - avertissement visuel pendant le tracé ; à la validation le serveur refuse (`PARCEL_OVERLAP`) et propose d'ajuster le contour.
-- **A5 - Parcelle hors de la zone couverte** - la parcelle est acceptée (le diagnostic NASA est mondial) mais un avertissement précise que le catalogue des cultures n'est pas disponible pour cette zone.
+- **A1 - Geolocation denied or unavailable** - GPS access denied, or computer without HTTPS: the map opens on the center of the configured region (Yaoundé) with a search bar.
+- **A2 - Search with no result** - message "place not found"; the user can move the map by hand.
+- **A3 - Outline correction before validation** - undo the last vertex, clear and start over, move a vertex; the estimated area is displayed live.
+- **A4 - Overlap with an existing parcel** - visual warning while drawing; at validation the server refuses (`PARCEL_OVERLAP`) and offers to adjust the outline.
+- **A5 - Parcel outside the covered zone** - the parcel is accepted (the NASA diagnosis is global) but a warning states that the crop catalog is not available for this zone.
 
-**Exceptions et erreurs**
+**Exceptions and errors**
 
-- **E1 - Polygone invalide ou vide** - segments qui se croisent, moins de 3 sommets distincts ou surface nulle : `INVALID_POLYGON` (400) ; invitation à retracer le contour.
-- **E2 - Surface hors bornes** - `INVALID_POLYGON` (400) si la surface est inférieure à 0,01 ha ou supérieure à 1 000 ha (bornes proposées).
-- **E3 - Nom manquant ou déjà utilisé dans la ferme** - `VALIDATION_ERROR` (422) ou `PARCEL_NAME_TAKEN` (409).
-- **E4 - SRTM indisponible** - la parcelle est enregistrée sans altitude ni pente (valeurs nulles) avec un avertissement ; la pente est à saisir à la main (CU6).
-- **E5 - Échec réseau pendant l'enregistrement** - le tracé reste affiché ; bouton « Réessayer ».
-- **E6 - Droits insuffisants** - `FORBIDDEN_ROLE` (403) pour un conseiller.
+- **E1 - Invalid or empty polygon** - crossing segments, fewer than 3 distinct vertices or zero area: `INVALID_POLYGON` (400); invitation to redraw the outline.
+- **E2 - Area out of bounds** - `INVALID_POLYGON` (400) if the area is less than 0.01 ha or greater than 1,000 ha (proposed bounds).
+- **E3 - Missing name or name already used in the farm** - `VALIDATION_ERROR` (422) or `PARCEL_NAME_TAKEN` (409).
+- **E4 - SRTM unavailable** - the parcel is saved without elevation or slope (null values) with a warning; the slope must be entered manually (UC6).
+- **E5 - Network failure during saving** - the outline remains displayed; "Retry" button.
+- **E6 - Insufficient rights** - `FORBIDDEN_ROLE` (403) for an advisor.
 
-**Règles de gestion**
+**Business rules**
 
-- Le polygone est stocké en GeoJSON, coordonnées longitude puis latitude (WGS84). L'anneau doit être fermé.
+- The polygon is stored in GeoJSON, coordinates longitude then latitude (WGS84). The ring must be closed.
 
-**Postconditions** : la parcelle est sauvegardée avec ses coordonnées, sa superficie, son centroïde et, si disponibles, son altitude et sa pente.
+**Postconditions**: the parcel is saved with its coordinates, area, centroid and, if available, its elevation and slope.
 
-**Accès API** : `POST /parcels`
+**API access**: `POST /parcels`
 
 ---
 
-### CU14 - Modifier ou supprimer une parcelle
+### UC14 - Edit or delete a parcel
 
 | | |
 |---|---|
-| **Acteurs** | Principaux : agriculteur principal, co-exploitants (modification). Agriculteur principal seul (suppression). |
-| **Priorité / besoin** | S - BF10 |
-| **Préconditions** | La parcelle existe et l'utilisateur est membre de la ferme avec le droit requis. |
+| **Actors** | Primary: main farmer, co-farmers (editing). Main farmer only (deletion). |
+| **Priority / need** | S - BF10 |
+| **Preconditions** | The parcel exists and the user is a member of the farm with the required right. |
 
-**Scénario nominal**
+**Main scenario**
 
-1. L'utilisateur ouvre la fiche de la parcelle et choisit « Modifier ».
-2. Il change le nom et/ou redessine le contour, puis valide.
-3. Le serveur revalide la géométrie, recalcule superficie, centroïde, altitude et pente, et invalide le diagnostic en cache.
+1. The user opens the parcel sheet and chooses "Edit".
+2. They change the name and/or redraw the outline, then confirm.
+3. The server revalidates the geometry, recalculates area, centroid, elevation and slope, and invalidates the cached diagnosis.
 
-**Scénarios alternatifs**
+**Alternative scenarios**
 
-- **A1 - Renommer seulement** - la géométrie n'étant pas modifiée, aucun recalcul NASA n'est lancé.
-- **A2 - Contour très modifié** - si le centroïde se déplace de plus de 5 km (seuil proposé), un avertissement précise que le diagnostic doit être revu ; les saisies locales sont conservées.
-- **A3 - Supprimer la parcelle** - le propriétaire clique sur « Supprimer », confirme en saisissant le nom ; la parcelle, ses saisies, son historique et ses stratégies enregistrées sont supprimés.
-- **A4 - Annulation** - l'utilisateur ferme la confirmation : rien n'est modifié.
-- **A5 - Stratégies déjà retenues** - après modification du contour, elles restent dans l'historique avec la mention « calculée sur l'ancien contour ».
+- **A1 - Rename only** - since the geometry is not modified, no NASA recalculation is launched.
+- **A2 - Heavily modified outline** - if the centroid moves by more than 5 km (proposed threshold), a warning states that the diagnosis must be reviewed; local inputs are kept.
+- **A3 - Delete the parcel** - the owner clicks "Delete", confirms by typing the name; the parcel, its inputs, its history and its saved strategies are deleted.
+- **A4 - Cancellation** - the user closes the confirmation: nothing is modified.
+- **A5 - Strategies already selected** - after the outline is modified, they remain in the history with the note "calculated on the old outline".
 
-**Exceptions et erreurs**
+**Exceptions and errors**
 
-- **E1 - Parcelle introuvable** - `PARCEL_NOT_FOUND` (404).
-- **E2 - Droits insuffisants** - `FORBIDDEN_ROLE` (403) : suppression par un co-exploitant, ou toute modification par un conseiller.
-- **E3 - Polygone invalide ou chevauchant** - `INVALID_POLYGON` (400) ou `PARCEL_OVERLAP` (409).
-- **E4 - Modification simultanée** - `VERSION_CONFLICT` (409) : l'écran affiche la version à jour et propose de refaire la modification.
-- **E5 - Échec réseau** - les changements restent dans le formulaire ; réessayer.
+- **E1 - Parcel not found** - `PARCEL_NOT_FOUND` (404).
+- **E2 - Insufficient rights** - `FORBIDDEN_ROLE` (403): deletion by a co-farmer, or any modification by an advisor.
+- **E3 - Invalid or overlapping polygon** - `INVALID_POLYGON` (400) or `PARCEL_OVERLAP` (409).
+- **E4 - Concurrent modification** - `VERSION_CONFLICT` (409): the screen shows the up-to-date version and offers to redo the modification.
+- **E5 - Network failure** - the changes remain in the form; retry.
 
-**Règles de gestion**
+**Business rules**
 
-- La suppression est définitive. Les PDF déjà téléchargés ne sont pas affectés.
+- Deletion is permanent. PDFs already downloaded are not affected.
 
-**Postconditions** : la parcelle est mise à jour ou supprimée ; le tableau de bord est rafraîchi.
+**Postconditions**: the parcel is updated or deleted; the dashboard is refreshed.
 
-**Accès API** : `PATCH/DELETE /parcels/{id}`
+**API access**: `PATCH/DELETE /parcels/{id}`
 
 ---
 
-### CU5 - Consulter le diagnostic climatique et environnemental NASA
+### UC5 - View the NASA climate and environmental diagnosis
 
 | | |
 |---|---|
-| **Acteurs** | Principaux : agriculteur principal, co-exploitants, conseillers. |
-| **Priorité / besoin** | M - BF3 |
-| **Préconditions** | La parcelle est enregistrée avec un centroïde valide. |
+| **Actors** | Primary: main farmer, co-farmers, advisors. |
+| **Priority / need** | M - BF3 |
+| **Preconditions** | The parcel is saved with a valid centroid. |
 
-**Scénario nominal**
+**Main scenario**
 
-1. Le serveur interroge NASA POWER en direct et lit les séries pré-agrégées (GPM IMERG, SMAP, MODIS NDVI, SRTM) de la cellule de grille de la parcelle.
-2. L'interface affiche les courbes mensuelles comparées aux normales historiques et met en évidence les périodes vulnérables (stress hydrique, sol nu en saison des pluies).
-3. L'utilisateur clique sur les bulles d'information pour lire la définition en une phrase de chaque terme (évapotranspiration, NDVI, anomalie d'humidité, bilan hydrique, risque de gel).
+1. The server queries NASA POWER live and reads the pre-aggregated series (GPM IMERG, SMAP, MODIS NDVI, SRTM) for the parcel's grid cell.
+2. The interface displays the monthly curves compared with historical normals and highlights vulnerable periods (water stress, bare soil in the rainy season).
+3. The user clicks the information bubbles to read the one-sentence definition of each term (evapotranspiration, NDVI, moisture anomaly, water balance, frost risk).
 
-**Scénarios alternatifs**
+**Alternative scenarios**
 
-- **A1 - Valeurs manquantes (-999)** - le serveur filtre le code d'erreur -999 ; un mois manquant isolé est interpolé et marqué comme tel, sans bloquer l'affichage.
-- **A2 - Plusieurs mois manquants** - si plus de 2 mois consécutifs manquent, ils sont affichés « donnée indisponible », non interpolés, et la confiance est abaissée.
-- **A3 - Pré-agrégats absents pour la zone** - SMAP ou NDVI indisponible : les autres indicateurs s'affichent, un bandeau précise l'indicateur manquant, la confiance baisse.
-- **A4 - Normale historique indisponible** - la courbe du mois s'affiche sans comparaison.
-- **A5 - Résolution grossière** - une note rappelle les résolutions (POWER 55 x 70 km, SMAP 9 km, NDVI 250 m) : la valeur est une estimation régionale, pas une mesure sur la parcelle (lien vers CU16).
+- **A1 - Missing values (-999)** - the server filters the error code -999; an isolated missing month is interpolated and marked as such, without blocking the display.
+- **A2 - Several missing months** - if more than 2 consecutive months are missing, they are displayed as "data unavailable", not interpolated, and confidence is lowered.
+- **A3 - Pre-aggregates absent for the zone** - SMAP or NDVI unavailable: the other indicators are displayed, a banner states the missing indicator, confidence drops.
+- **A4 - Historical normal unavailable** - the month's curve is displayed without comparison.
+- **A5 - Coarse resolution** - a note recalls the resolutions (POWER 55 x 70 km, SMAP 9 km, NDVI 250 m): the value is a regional estimate, not a measurement on the parcel (link to UC16).
 
-**Exceptions et erreurs**
+**Exceptions and errors**
 
-- **E1 - NASA POWER lent ou en panne (Plan B)** - sans réponse sous 5 secondes, le serveur sert les séries en cache (`data_source_status = fallback_cache`) avec la date du cache et un bandeau d'information.
-- **E2 - Aucun cache disponible** - le jeu de secours local régional est utilisé (`fallback_local`) avec un bandeau « données régionales de démonstration, non propres à votre parcelle » ; la confiance est faible.
-- **E3 - Aucune source disponible** - `CLIMATE_DATA_UNAVAILABLE` (503) : message clair, bouton « Réessayer ».
-- **E4 - Valeur aberrante ou unité incohérente** - la valeur est exclue ou convertie (mm/jour vers mm/mois) et signalée.
-- **E5 - Parcelle introuvable ou accès refusé** - `PARCEL_NOT_FOUND` (404) ou `NOT_FARM_MEMBER` (403).
+- **E1 - NASA POWER slow or down (Plan B)** - with no response within 5 seconds, the server serves the cached series (`data_source_status = fallback_cache`) with the cache date and an information banner.
+- **E2 - No cache available** - the regional local fallback dataset is used (`fallback_local`) with a banner "regional demonstration data, not specific to your parcel"; confidence is low.
+- **E3 - No source available** - `CLIMATE_DATA_UNAVAILABLE` (503): clear message, "Retry" button.
+- **E4 - Outlier value or inconsistent unit** - the value is excluded or converted (mm/day to mm/month) and flagged.
+- **E5 - Parcel not found or access denied** - `PARCEL_NOT_FOUND` (404) or `NOT_FARM_MEMBER` (403).
 
-**Règles de gestion**
+**Business rules**
 
-- Délai d'attente de NASA POWER : 5 secondes. Les textes d'aide sont les cinq définitions du glossaire.
+- NASA POWER timeout: 5 seconds. The help texts are the five glossary definitions.
 
-**Postconditions** : le contexte climatique et environnemental est chargé et prêt pour le calcul des rotations.
+**Postconditions**: the climate and environmental context is loaded and ready for the rotation calculation.
 
-**Accès API** : `GET /parcels/{id}/climate`
+**API access**: `GET /parcels/{id}/climate`
 
 ---
 
-## 4. Module 3 : Configuration locale et priorités
+## 4. Module 3: Local configuration and priorities
 
-### CU6 - Renseigner les données locales et corriger les données NASA
+### UC6 - Enter local data and correct NASA data
 
 | | |
 |---|---|
-| **Acteurs** | Principaux : agriculteur principal, co-exploitants. Conseillers : lecture seule. |
-| **Priorité / besoin** | M - BF4 |
-| **Préconditions** | Le diagnostic NASA de la parcelle est affiché (CU5) et l'utilisateur a le droit d'édition. |
+| **Actors** | Primary: main farmer, co-farmers. Advisors: read-only. |
+| **Priority / need** | M - BF4 |
+| **Preconditions** | The parcel's NASA diagnosis is displayed (UC5) and the user has editing rights. |
 
-**Scénario nominal**
+**Main scenario**
 
-1. L'utilisateur remplit le formulaire terrain : texture du sol (sableux, limoneux, argileux), pH (si connu), drainage, matière organique, pente et disponibilité de l'irrigation en saison sèche.
-2. Il renseigne l'historique des cultures des 3 dernières saisons.
-3. Il vérifie les valeurs satellites affichées et corrige toute estimation qui diffère de ses observations.
+1. The user fills in the field form: soil texture (sandy, loamy, clayey), pH (if known), drainage, organic matter, slope and availability of irrigation in the dry season.
+2. They enter the crop history of the last 3 seasons.
+3. They check the displayed satellite values and correct any estimate that differs from their observations.
 
-**Scénarios alternatifs**
+**Alternative scenarios**
 
-- **A1 - Paramètre inconnu (ex. pH)** - le système applique la valeur régionale par défaut et abaisse le poids de confiance de l'entrée de 1,0 à 0,4.
-- **A2 - Correction de terrain prioritaire** - toute valeur corrigée par l'utilisateur remplace l'estimation satellite dans le moteur et passe à un poids de confiance de 1,0.
-- **A3 - Annuler une correction** - l'utilisateur rétablit la valeur satellite ; le poids de confiance redevient celui de l'estimation.
-- **A4 - Historique incomplet** - moins de 3 saisons renseignées : acceptées ; les saisons inconnues sont marquées « inconnu », la règle R1 n'est pas évaluée sur ces saisons et la confiance baisse.
-- **A5 - Saison en jachère** - l'utilisateur choisit « jachère / repos » pour une saison sans culture.
-- **A6 - Pente déjà fournie par SRTM** - la pente est préremplie ; l'utilisateur la confirme ou la corrige (`slope_confirmed`).
-- **A7 - Enregistrement partiel** - l'utilisateur peut enregistrer le formulaire incomplet et le terminer plus tard ; l'indicateur de la parcelle (CU3-A5) reste affiché.
+- **A1 - Unknown parameter (e.g. pH)** - the system applies the regional default value and lowers the input's confidence weight from 1.0 to 0.4.
+- **A2 - Field correction takes priority** - any value corrected by the user replaces the satellite estimate in the engine and goes to a confidence weight of 1.0.
+- **A3 - Undo a correction** - the user restores the satellite value; the confidence weight goes back to that of the estimate.
+- **A4 - Incomplete history** - fewer than 3 seasons entered: accepted; unknown seasons are marked "unknown", rule R1 is not evaluated on those seasons and confidence drops.
+- **A5 - Fallow season** - the user chooses "fallow / rest" for a season with no crop.
+- **A6 - Slope already provided by SRTM** - the slope is pre-filled; the user confirms or corrects it (`slope_confirmed`).
+- **A7 - Partial save** - the user can save the incomplete form and finish it later; the parcel's indicator (UC3-A5) remains displayed.
 
-**Exceptions et erreurs**
+**Exceptions and errors**
 
-- **E1 - Valeur hors plage** - ex. pH hors de 3,0 à 10,0, pente hors de 0 à 90 degrés, correction de pluie hors de -100 % à +100 % : `VALIDATION_ERROR` (422) avec le champ concerné.
-- **E2 - Culture inconnue du catalogue** - `CROP_NOT_FOUND` (422) ; l'utilisateur choisit « autre culture » et sa famille botanique.
-- **E3 - Saisons en double ou indices invalides** - `VALIDATION_ERROR` (422).
-- **E4 - Modification simultanée par un autre membre** - `VERSION_CONFLICT` (409) : les valeurs à jour sont affichées.
-- **E5 - Droits insuffisants** - `FORBIDDEN_ROLE` (403) pour un conseiller.
-- **E6 - Échec réseau** - la saisie est conservée dans le formulaire.
+- **E1 - Value out of range** - e.g. pH outside 3.0 to 10.0, slope outside 0 to 90 degrees, rainfall correction outside -100% to +100%: `VALIDATION_ERROR` (422) with the field concerned.
+- **E2 - Crop unknown to the catalog** - `CROP_NOT_FOUND` (422); the user chooses "other crop" and its botanical family.
+- **E3 - Duplicate seasons or invalid indices** - `VALIDATION_ERROR` (422).
+- **E4 - Concurrent modification by another member** - `VERSION_CONFLICT` (409): the up-to-date values are displayed.
+- **E5 - Insufficient rights** - `FORBIDDEN_ROLE` (403) for an advisor.
+- **E6 - Network failure** - the input is kept in the form.
 
-**Règles de gestion**
+**Business rules**
 
-- Toute saisie met à jour l'indice de confiance global de la parcelle ; les stratégies déjà calculées deviennent « à recalculer ».
+- Any input updates the parcel's overall confidence index; strategies already calculated become "to be recalculated".
 
-**Postconditions** : le profil agronomique local est enregistré ; l'indice de confiance global de la parcelle est mis à jour.
+**Postconditions**: the local agronomic profile is saved; the parcel's overall confidence index is updated.
 
-**Accès API** : `GET/PUT /parcels/{id}/local-inputs`, `GET/PUT /parcels/{id}/history`, `GET /crops`
+**API access**: `GET/PUT /parcels/{id}/local-inputs`, `GET/PUT /parcels/{id}/history`, `GET /crops`
 
 ---
 
-### CU7 - Définir ses priorités et ses contraintes opérationnelles
+### UC7 - Define priorities and operational constraints
 
 | | |
 |---|---|
-| **Acteurs** | Principaux : agriculteur principal, co-exploitants. Conseillers : lecture seule. |
-| **Priorité / besoin** | M - BF4 |
-| **Préconditions** | Les informations de base de la parcelle sont enregistrées. |
+| **Actors** | Primary: main farmer, co-farmers. Advisors: read-only. |
+| **Priority / need** | M - BF4 |
+| **Preconditions** | The parcel's basic information is saved. |
 
-**Scénario nominal**
+**Main scenario**
 
-1. L'utilisateur classe ses priorités par ordre d'importance : économie d'eau, revenu, santé du sol, apport en azote, lutte contre l'érosion, valeur fourragère.
-2. Il indique ses contraintes matérielles (équipement, main-d'œuvre), les cultures strictement exclues et les débouchés disponibles sur le marché local.
-3. Le système convertit le classement en poids normalisés p<sub>ij</sub> dont la somme vaut 1.
+1. The user ranks their priorities in order of importance: water saving, income, soil health, nitrogen supply, erosion control, fodder value.
+2. They indicate their equipment constraints (equipment, labor), strictly excluded crops and the outlets available on the local market.
+3. The system converts the ranking into normalized weights p<sub>ij</sub> that sum to 1.
 
-**Scénarios alternatifs**
+**Alternative scenarios**
 
-- **A1 - Priorités par défaut** - si l'ordre proposé n'est pas modifié, pondération équilibrée entre revenu, eau et santé du sol (par exemple 0,30 chacun) et le reste réparti entre azote, érosion et fourrage.
-- **A2 - Ex æquo** - deux priorités jugées égales reçoivent le même poids (moyenne des rangs).
-- **A3 - Réglage direct des poids** - un utilisateur averti peut régler les poids par curseurs ; ils sont normalisés pour totaliser 1.
-- **A4 - Débouchés non renseignés** - toutes les cultures du catalogue sont considérées vendables ; un avertissement baisse la confiance de la rubrique « revenu ».
-- **A5 - Contraintes matérielles vides** - aucune contrainte n'est appliquée.
-- **A6 - Réintégrer une culture exclue** - l'utilisateur retire la culture de la liste d'exclusion ; les stratégies deviennent « à recalculer ».
-- **A7 - Culture exclue présente dans l'historique** - acceptée : l'historique décrit la réalité ; la stratégie existante l'affichera avec un avertissement.
+- **A1 - Default priorities** - if the proposed order is not changed, balanced weighting between income, water and soil health (e.g. 0.30 each) and the remainder spread across nitrogen, erosion and fodder.
+- **A2 - Ties** - two priorities judged equal receive the same weight (average of ranks).
+- **A3 - Direct weight setting** - an advanced user can set the weights with sliders; they are normalized to total 1.
+- **A4 - Outlets not provided** - all crops in the catalog are considered sellable; a warning lowers the confidence of the "income" section.
+- **A5 - Empty equipment constraints** - no constraint is applied.
+- **A6 - Reinstate an excluded crop** - the user removes the crop from the exclusion list; strategies become "to be recalculated".
+- **A7 - Excluded crop present in the history** - accepted: the history describes reality; the existing strategy will display it with a warning.
 
-**Exceptions et erreurs**
+**Exceptions and errors**
 
-- **E1 - Exclusion excessive** - si presque toutes les cultures du catalogue sont exclues, un avertissement indique que les règles de rotation strictes (R1 à R9) risquent d'être compromises.
-- **E2 - Moins de 2 cultures disponibles** - `NO_CROP_AVAILABLE` (422) : l'enregistrement est refusé tant que 2 cultures au moins ne restent pas disponibles.
-- **E3 - Poids invalides** - valeur négative ou somme nulle : `VALIDATION_ERROR` (422) ; une somme différente de 1 est renormalisée.
-- **E4 - Culture exclue ou vendable inconnue** - `CROP_NOT_FOUND` (422).
-- **E5 - Modification simultanée** - `VERSION_CONFLICT` (409).
-- **E6 - Droits insuffisants** - `FORBIDDEN_ROLE` (403) pour un conseiller.
+- **E1 - Excessive exclusion** - if almost all crops in the catalog are excluded, a warning indicates that the strict rotation rules (R1 to R9) risk being compromised.
+- **E2 - Fewer than 2 crops available** - `NO_CROP_AVAILABLE` (422): saving is refused until at least 2 crops remain available.
+- **E3 - Invalid weights** - negative value or zero sum: `VALIDATION_ERROR` (422); a sum other than 1 is renormalized.
+- **E4 - Unknown excluded or sellable crop** - `CROP_NOT_FOUND` (422).
+- **E5 - Concurrent modification** - `VERSION_CONFLICT` (409).
+- **E6 - Insufficient rights** - `FORBIDDEN_ROLE` (403) for an advisor.
 
-**Règles de gestion**
+**Business rules**
 
-- Conversion d'un classement en poids : méthode des poids par rang (ROC, proposition) ou poids saisis directement.
+- Conversion of a ranking into weights: rank-order centroid (ROC, proposal) method or directly entered weights.
 
-**Postconditions** : les préférences et contraintes sont sauvegardées et prêtes pour la fonction objectif de `agrorot_core`.
+**Postconditions**: the preferences and constraints are saved and ready for the objective function of `agrorot_core`.
 
-**Accès API** : `GET/PUT /parcels/{id}/preferences`
+**API access**: `GET/PUT /parcels/{id}/preferences`
 
 ---
 
-## 5. Module 4 : Recommandation, simulation et validation
+## 5. Module 4: Recommendation, simulation and validation
 
-### CU8 - Générer et comparer les 3 stratégies de rotation
+### UC8 - Generate and compare the 3 rotation strategies
 
 | | |
 |---|---|
-| **Acteurs** | Principaux : agriculteur principal, co-exploitants, conseillers. |
-| **Priorité / besoin** | M - BF5 |
-| **Préconditions** | La parcelle dispose des données climatiques (CU5), de son historique (CU6) et des priorités (CU7). |
+| **Actors** | Primary: main farmer, co-farmers, advisors. |
+| **Priority / need** | M - BF5 |
+| **Preconditions** | The parcel has its climate data (UC5), its history (UC6) and its priorities (UC7). |
 
-**Scénario nominal**
+**Main scenario**
 
-1. L'utilisateur clique sur « Calculer les stratégies ». Le moteur `agrorot_core` écarte les cultures inadaptées (aptitude inférieure à 0,3) et explore des séquences sur 6 saisons selon les règles R1 à R9.
-2. L'interface affiche côte à côte : stratégie 1 (existante), stratégie 2 (recommandée selon les priorités), stratégie 3 (alternative selon un profil complémentaire).
-3. Chaque stratégie affiche sa séquence par saison, son score global (0-100), son indice de résilience et son niveau de confiance (élevée, moyenne, faible).
+1. The user clicks "Calculate strategies". The `agrorot_core` engine discards unsuitable crops (suitability below 0.3) and explores sequences over 6 seasons according to rules R1 to R9.
+2. The interface displays side by side: strategy 1 (existing), strategy 2 (recommended according to priorities), strategy 3 (alternative according to a complementary profile).
+3. Each strategy displays its sequence per season, its overall score (0-100), its resilience index and its confidence level (high, medium, low).
 
-**Scénarios alternatifs**
+**Alternative scenarios**
 
-- **A1 - Aucune rotation existante** - sans historique, la stratégie 1 simule une monoculture témoin (ex. maïs continu) pour garder un point de comparaison.
-- **A2 - Historique partiel** - la stratégie existante est projetée à partir des saisons connues ; la fiche mentionne les saisons manquantes.
-- **A3 - Alternative trop proche** - si le profil complémentaire donne une séquence identique à la recommandée, le moteur retient la meilleure séquence différant sur au moins la moitié des saisons.
-- **A4 - Confiance faible** - un bandeau invite à compléter les saisies (lien vers CU6).
-- **A5 - Calcul long** - un indicateur de progression est affiché ; l'utilisateur peut annuler.
-- **A6 - Résultats déjà calculés** - si rien n'a changé depuis le dernier calcul, les résultats mémorisés sont réaffichés ; un changement de saisie les marque « à recalculer ».
-- **A7 - Mode dégradé** - si le diagnostic provient du cache ou du jeu de secours, le niveau de confiance est abaissé et la source est indiquée.
+- **A1 - No existing rotation** - with no history, strategy 1 simulates a control monoculture (e.g. continuous maize) to keep a point of comparison.
+- **A2 - Partial history** - the existing strategy is projected from the known seasons; the sheet mentions the missing seasons.
+- **A3 - Alternative too close** - if the complementary profile yields a sequence identical to the recommended one, the engine retains the best sequence that differs in at least half of the seasons.
+- **A4 - Low confidence** - a banner invites the user to complete the inputs (link to UC6).
+- **A5 - Long calculation** - a progress indicator is displayed; the user can cancel.
+- **A6 - Results already calculated** - if nothing has changed since the last calculation, the stored results are redisplayed; an input change marks them "to be recalculated".
+- **A7 - Degraded mode** - if the diagnosis comes from the cache or the fallback dataset, the confidence level is lowered and the source is indicated.
 
-**Exceptions et erreurs**
+**Exceptions and errors**
 
-- **E1 - Contraintes insolubles** - si aucune séquence ne respecte toutes les exclusions, le moteur relâche les règles secondaires (bonus et pénalités) et signale la contrainte bloquante dans les avertissements.
-- **E2 - Moins de 2 cultures aptes** - `NO_SUITABLE_CROP` (422) : aucune stratégie viable ; l'interface explique les causes (climat, exclusions) et propose de réviser CU7.
-- **E3 - Région sans catalogue de cultures** - `REGION_NOT_SUPPORTED` (404).
-- **E4 - Diagnostic climatique indisponible** - `CLIMATE_DATA_UNAVAILABLE` (503).
-- **E5 - Moteur indisponible ou délai dépassé** - `ENGINE_UNAVAILABLE` (503) ; les derniers résultats valides restent affichés avec un bandeau.
-- **E6 - Saisies obligatoires manquantes** - `PRECONDITION_FAILED` (409) : l'interface dirige vers l'écran à compléter.
-- **E7 - Droits ou parcelle** - `NOT_FARM_MEMBER` (403) ou `PARCEL_NOT_FOUND` (404).
+- **E1 - Unsolvable constraints** - if no sequence respects all the exclusions, the engine relaxes the secondary rules (bonuses and penalties) and flags the blocking constraint in the warnings.
+- **E2 - Fewer than 2 suitable crops** - `NO_SUITABLE_CROP` (422): no viable strategy; the interface explains the causes (climate, exclusions) and offers to review UC7.
+- **E3 - Region without a crop catalog** - `REGION_NOT_SUPPORTED` (404).
+- **E4 - Climate diagnosis unavailable** - `CLIMATE_DATA_UNAVAILABLE` (503).
+- **E5 - Engine unavailable or timeout** - `ENGINE_UNAVAILABLE` (503); the latest valid results remain displayed with a banner.
+- **E6 - Missing required inputs** - `PRECONDITION_FAILED` (409): the interface directs the user to the screen to complete.
+- **E7 - Rights or parcel** - `NOT_FARM_MEMBER` (403) or `PARCEL_NOT_FOUND` (404).
 
-**Règles de gestion**
+**Business rules**
 
-- Les trois stratégies sont toujours renvoyées avec l'avertissement d'aide à la décision. L'alternative contient 100 % de cultures différentes de la recommandée si possible.
+- The three strategies are always returned with the decision-support disclaimer. The alternative contains 100% different crops from the recommended one if possible.
 
-**Postconditions** : les trois stratégies sont affichées et mémorisées (identifiant de calcul) pour exploration.
+**Postconditions**: the three strategies are displayed and stored (calculation identifier) for exploration.
 
-**Accès API** : `POST /parcels/{id}/strategies`
+**API access**: `POST /parcels/{id}/strategies`
 
 ---
 
-### CU9 - Consulter la fiche d'explication détaillée d'une stratégie
+### UC9 - View a strategy's detailed explanation sheet
 
 | | |
 |---|---|
-| **Acteurs** | Principaux : agriculteur principal, co-exploitants, conseillers. |
-| **Priorité / besoin** | M - BF6 |
-| **Préconditions** | Les 3 stratégies sont générées (CU8). |
+| **Actors** | Primary: main farmer, co-farmers, advisors. |
+| **Priority / need** | M - BF6 |
+| **Preconditions** | The 3 strategies are generated (UC8). |
 
-**Scénario nominal**
+**Main scenario**
 
-1. L'utilisateur clique sur « Voir les détails » sur l'une des trois stratégies.
-2. Le système affiche les 5 rubriques : **Pourquoi** (facteurs de score), **Preuves** (données NASA et terrain utilisées), **Bénéfices** (azote, eau, revenu), **Lacunes d'information** (paramètres par défaut), **Risques à vérifier localement** (règles proches du seuil).
-3. Un bandeau permanent rappelle que l'outil soutient la décision humaine et ne remplace pas l'expertise agronomique locale.
+1. The user clicks "View details" on one of the three strategies.
+2. The system displays the 5 sections: **Why** (score factors), **Evidence** (NASA and field data used), **Benefits** (nitrogen, water, income), **Information gaps** (default parameters), **Risks to check locally** (rules close to the threshold).
+3. A permanent banner reminds the user that the tool supports human decision-making and does not replace local agronomic expertise.
 
-**Scénarios alternatifs**
+**Alternative scenarios**
 
-- **A1 - Confiance faible** - si de nombreuses données sont par défaut, « Lacunes d'information » passe en tête avec un bouton vers le formulaire (CU6).
-- **A2 - Aucun risque détecté** - la rubrique reste affichée : « aucun risque détecté par le modèle, à confirmer localement ».
-- **A3 - Stratégie modifiée à la main** - la fiche signale les saisons modifiées (CU11) et leur impact sur le score.
-- **A4 - Source de données dégradée** - la rubrique « Preuves » indique la source (live, cache, jeu de secours).
-- **A5 - Lien vers l'aide** - chaque terme technique ouvre sa définition ; un lien mène à CU16.
+- **A1 - Low confidence** - if many data are defaults, "Information gaps" moves to the top with a button to the form (UC6).
+- **A2 - No risk detected** - the section remains displayed: "no risk detected by the model, to be confirmed locally".
+- **A3 - Strategy modified by hand** - the sheet flags the modified seasons (UC11) and their impact on the score.
+- **A4 - Degraded data source** - the "Evidence" section indicates the source (live, cache, fallback dataset).
+- **A5 - Link to help** - each technical term opens its definition; a link leads to UC16.
 
-**Exceptions et erreurs**
+**Exceptions and errors**
 
-- **E1 - Stratégie périmée ou introuvable** - les saisies ont changé depuis le calcul : `STRATEGY_NOT_FOUND` (404) ; invitation à recalculer (CU8).
-- **E2 - Rubrique non générable** - si une donnée manque, la rubrique affiche « information indisponible » ; aucun texte n'est inventé.
+- **E1 - Outdated or missing strategy** - the inputs have changed since the calculation: `STRATEGY_NOT_FOUND` (404); invitation to recalculate (UC8).
+- **E2 - Section cannot be generated** - if a datum is missing, the section displays "information unavailable"; no text is invented.
 
-**Règles de gestion**
+**Business rules**
 
-- Les textes sont déduits uniquement des scores et des données de calcul.
+- The texts are derived solely from the scores and calculation data.
 
-**Postconditions** : l'utilisateur et son conseiller comprennent les fondements scientifiques et les limites de la recommandation.
+**Postconditions**: the user and their advisor understand the scientific basis and the limits of the recommendation.
 
-**Accès API** : données incluses dans la réponse de `POST /parcels/{id}/strategies` (champ `explanation`)
+**API access**: data included in the response of `POST /parcels/{id}/strategies` (`explanation` field)
 
 ---
 
-### CU10 - Simuler un scénario climatique (« Et si... »)
+### UC10 - Simulate a climate scenario ("What if...")
 
 | | |
 |---|---|
-| **Acteurs** | Principaux : agriculteur principal, co-exploitants, conseillers. |
-| **Priorité / besoin** | M - BF7 |
-| **Préconditions** | Les 3 stratégies sont affichées (CU8). |
+| **Actors** | Primary: main farmer, co-farmers, advisors. |
+| **Priority / need** | M - BF7 |
+| **Preconditions** | The 3 strategies are displayed (UC8). |
 
-**Scénario nominal**
+**Main scenario**
 
-1. L'utilisateur manipule les curseurs : précipitations (-30 % à +30 %), hausse de température (+0 à +3 °C) ou horizon (aujourd'hui, +5 ans, +10 ans).
-2. Le moteur réévalue immédiatement les fonctions d'aptitude trapézoïdales sous ces conditions.
-3. Scores, indices de résilience et alertes de stress hydrique des 3 stratégies se mettent à jour.
+1. The user manipulates the sliders: precipitation (-30% to +30%), temperature increase (+0 to +3 °C) or horizon (today, +5 years, +10 years).
+2. The engine immediately re-evaluates the trapezoidal suitability functions under these conditions.
+3. Scores, resilience indices and water stress alerts of the 3 strategies are updated.
 
-**Scénarios alternatifs**
+**Alternative scenarios**
 
-- **A1 - Réinitialisation** - « Réinitialiser le climat » rétablit les normales saisonnières actuelles.
-- **A2 - Combinaison de curseurs** - pluie, température et horizon peuvent être combinés.
-- **A3 - Comparaison avant et après** - l'écart de score par rapport à la situation de départ est affiché pour chaque stratégie.
-- **A4 - Horizon lointain** - pour +5 et +10 ans, une note précise qu'il s'agit d'un scénario d'extrapolation, pas d'une prévision.
-- **A5 - Retenir un scénario** - si l'utilisateur retient une stratégie (CU12), les valeurs de simulation sont enregistrées avec elle.
-- **A6 - Simulation non enregistrée** - sans action de sa part, rien n'est sauvegardé ; quitter l'écran réinitialise le climat.
+- **A1 - Reset** - "Reset climate" restores the current seasonal normals.
+- **A2 - Slider combination** - rainfall, temperature and horizon can be combined.
+- **A3 - Before and after comparison** - the score difference relative to the starting situation is displayed for each strategy.
+- **A4 - Distant horizon** - for +5 and +10 years, a note states that this is an extrapolation scenario, not a forecast.
+- **A5 - Select a scenario** - if the user selects a strategy (UC12), the simulation values are saved with it.
+- **A6 - Unsaved simulation** - without any action on their part, nothing is saved; leaving the screen resets the climate.
 
-**Exceptions et erreurs**
+**Exceptions and errors**
 
-- **E1 - Effondrement d'une culture** - si la hausse simulée dépasse la borne maximale d d'une culture, son aptitude tombe à 0 et une alerte rouge signale l'incompatibilité climatique.
-- **E2 - Stratégie non viable** - si toutes les cultures d'une stratégie tombent à 0, elle est marquée « non viable ».
-- **E3 - Valeur de curseur hors bornes** - bloquée par l'interface ; `INVALID_SCENARIO` (422) côté API.
-- **E4 - Recalcul lent ou en échec** - le dernier résultat valide reste affiché avec un indicateur ; `ENGINE_UNAVAILABLE` (503) en cas de panne ; les requêtes sont espacées (300 ms) pour éviter l'engorgement.
+- **E1 - Crop collapse** - if the simulated increase exceeds a crop's maximum bound d, its suitability falls to 0 and a red alert flags the climate incompatibility.
+- **E2 - Non-viable strategy** - if all the crops of a strategy fall to 0, it is marked "non-viable".
+- **E3 - Slider value out of bounds** - blocked by the interface; `INVALID_SCENARIO` (422) on the API side.
+- **E4 - Slow or failed recalculation** - the latest valid result remains displayed with an indicator; `ENGINE_UNAVAILABLE` (503) in case of outage; requests are spaced out (300 ms) to avoid congestion.
 
-**Règles de gestion**
+**Business rules**
 
-- Bornes : pluie -30 % à +30 %, température +0 à +3 °C, horizons 0, 5 ou 10 ans.
+- Bounds: rainfall -30% to +30%, temperature +0 to +3 °C, horizons 0, 5 or 10 years.
 
-**Postconditions** : l'utilisateur visualise la robustesse comparée de chaque stratégie face au changement climatique.
+**Postconditions**: the user sees the compared robustness of each strategy against climate change.
 
-**Accès API** : `POST /parcels/{id}/strategies` (champ `climate_scenario`)
+**API access**: `POST /parcels/{id}/strategies` (`climate_scenario` field)
 
 ---
 
-### CU11 - Modifier manuellement une culture et recalculer
+### UC11 - Manually change a crop and recalculate
 
 | | |
 |---|---|
-| **Acteurs** | Principaux : agriculteur principal, co-exploitants, conseillers (sans enregistrement). |
-| **Priorité / besoin** | M - BF7 |
-| **Préconditions** | Une stratégie de rotation est affichée. |
+| **Actors** | Primary: main farmer, co-farmers, advisors (without saving). |
+| **Priority / need** | M - BF7 |
+| **Preconditions** | A rotation strategy is displayed. |
 
-**Scénario nominal**
+**Main scenario**
 
-1. L'utilisateur clique sur la carte d'une saison (ex. saison 3) et choisit une autre culture dans la liste du catalogue régional.
-2. Le frontend envoie la séquence modifiée à l'API.
-3. Le moteur réapplique les règles R1 à R9, recalcule bonus et pénalités, met à jour le score et la fiche d'explication.
+1. The user clicks a season's card (e.g. season 3) and chooses another crop from the regional catalog list.
+2. The frontend sends the modified sequence to the API.
+3. The engine reapplies rules R1 to R9, recalculates bonuses and penalties, and updates the score and the explanation sheet.
 
-**Scénarios alternatifs**
+**Alternative scenarios**
 
-- **A1 - Violation d'une règle** - deux cultures de la même famille à la suite (ex. tomate après tomate) : le test est autorisé, la pénalité (-25 points) s'applique et l'alerte R1 apparaît dans la fiche.
-- **A2 - Annuler la modification** - un clic rétablit la proposition générée par le moteur.
-- **A3 - Plusieurs saisons modifiées** - l'utilisateur peut modifier plusieurs saisons ; chaque changement est signalé.
-- **A4 - Culture inadaptée** - si l'aptitude de la culture choisie est inférieure à 0,3, elle est autorisée avec une alerte.
-- **A5 - Culture exclue** - les cultures exclues (CU7) ne figurent pas dans la liste par défaut.
-- **A6 - Modification de la stratégie existante** - permise pour tester une variante de la rotation actuelle.
+- **A1 - Rule violation** - two crops of the same family in a row (e.g. tomato after tomato): the test is allowed, the penalty (-25 points) applies and the R1 alert appears in the sheet.
+- **A2 - Undo the modification** - one click restores the proposal generated by the engine.
+- **A3 - Several seasons modified** - the user can modify several seasons; each change is flagged.
+- **A4 - Unsuitable crop** - if the chosen crop's suitability is below 0.3, it is allowed with an alert.
+- **A5 - Excluded crop** - excluded crops (UC7) do not appear in the default list.
+- **A6 - Modification of the existing strategy** - allowed to test a variant of the current rotation.
 
-**Exceptions et erreurs**
+**Exceptions and errors**
 
-- **E1 - Culture inconnue** - `CROP_NOT_FOUND` (422).
-- **E2 - Culture exclue forcée** - `EXCLUDED_CROP` (422) si l'appel contourne l'interface.
-- **E3 - Saison hors horizon** - `VALIDATION_ERROR` (422).
-- **E4 - Échec du recalcul** - la modification est annulée, l'état précédent est réaffiché ; `ENGINE_UNAVAILABLE` (503).
-- **E5 - Résultats périmés** - si les saisies ont changé entre-temps, invitation à recalculer.
+- **E1 - Unknown crop** - `CROP_NOT_FOUND` (422).
+- **E2 - Excluded crop forced** - `EXCLUDED_CROP` (422) if the call bypasses the interface.
+- **E3 - Season outside horizon** - `VALIDATION_ERROR` (422).
+- **E4 - Recalculation failure** - the modification is cancelled, the previous state is redisplayed; `ENGINE_UNAVAILABLE` (503).
+- **E5 - Outdated results** - if the inputs have changed in the meantime, invitation to recalculate.
 
-**Règles de gestion**
+**Business rules**
 
-- Une modification manuelle n'est pas enregistrée tant que l'utilisateur ne retient pas la stratégie (CU12).
+- A manual modification is not saved until the user selects the strategy (UC12).
 
-**Postconditions** : le plan personnalisé est réévalué en direct selon les règles scientifiques du moteur.
+**Postconditions**: the personalized plan is re-evaluated live according to the engine's scientific rules.
 
-**Accès API** : `POST /parcels/{id}/strategies` (champ `manual_overrides`)
+**API access**: `POST /parcels/{id}/strategies` (`manual_overrides` field)
 
 ---
 
-## 6. Module 5 : Suivi, pédagogie et export
+## 6. Module 5: Follow-up, education and export
 
-### CU12 - Enregistrer, annoter et exporter la stratégie retenue
+### UC12 - Save, annotate and export the selected strategy
 
 | | |
 |---|---|
-| **Acteurs** | Principaux : agriculteur principal, co-exploitants (retenir, observation). Conseillers (avis de validation, export). |
-| **Priorité / besoin** | M - BF8 |
-| **Préconditions** | Une stratégie a été générée ou personnalisée (CU8 ou CU11). |
+| **Actors** | Primary: main farmer, co-farmers (select, observation). Advisors (validation opinion, export). |
+| **Priority / need** | M - BF8 |
+| **Preconditions** | A strategy has been generated or customized (UC8 or UC11). |
 
-**Scénario nominal**
+**Main scenario**
 
-1. L'utilisateur clique sur « Retenir cette stratégie » pour l'archiver dans l'historique de la parcelle avec la date du jour.
-2. Il saisit une note d'observation terrain (ou un avis de validation pour le conseiller), visible par tous les membres.
-3. Il clique sur « Exporter en PDF » pour obtenir une fiche imprimable : calendrier de rotation, preuves NASA, risques à vérifier, rappel d'expertise humaine.
+1. The user clicks "Select this strategy" to archive it in the parcel's history with today's date.
+2. They enter a field observation note (or a validation opinion for the advisor), visible to all members.
+3. They click "Export as PDF" to obtain a printable sheet: rotation calendar, NASA evidence, risks to check, reminder of human expertise.
 
-**Scénarios alternatifs**
+**Alternative scenarios**
 
-- **A1 - Stratégie modifiée ou simulée** - les modifications manuelles et le scénario climatique sont enregistrés avec la stratégie.
-- **A2 - Retenir à nouveau** - une nouvelle entrée datée est créée ; l'historique conserve les versions précédentes.
-- **A3 - Avis du conseiller** - un conseiller ajoute un avis de validation sans retenir la stratégie.
-- **A4 - Observation ultérieure** - un membre ajoute une observation à une stratégie déjà archivée.
-- **A5 - Supprimer une note** - l'auteur ou le propriétaire peut supprimer une note.
-- **A6 - Consulter l'historique** - liste des stratégies retenues, triée par date, avec auteur et notes.
-- **A7 - Aide pédagogique** - à tout moment l'utilisateur ouvre « Comment lire ces résultats » (CU16).
+- **A1 - Modified or simulated strategy** - the manual modifications and the climate scenario are saved with the strategy.
+- **A2 - Select again** - a new dated entry is created; the history keeps the previous versions.
+- **A3 - Advisor's opinion** - an advisor adds a validation opinion without selecting the strategy.
+- **A4 - Later observation** - a member adds an observation to an already archived strategy.
+- **A5 - Delete a note** - the author or the owner can delete a note.
+- **A6 - View the history** - list of selected strategies, sorted by date, with author and notes.
+- **A7 - Educational help** - at any time the user opens "How to read these results" (UC16).
 
-**Exceptions et erreurs**
+**Exceptions and errors**
 
-- **E1 - Échec de génération du PDF** - `PDF_GENERATION_FAILED` (503) : l'interface déclenche la boîte d'impression native (`window.print()`) mise en page A4.
-- **E2 - Stratégie introuvable ou périmée** - `STRATEGY_NOT_FOUND` (404) : relancer le calcul.
-- **E3 - Note trop longue** - `VALIDATION_ERROR` (422) au-delà de 1 000 caractères.
-- **E4 - Échec réseau à la sauvegarde** - la note saisie est conservée ; réessayer sans ressaisir.
-- **E5 - Double enregistrement** - le bouton est désactivé pendant la requête.
-- **E6 - Droits insuffisants** - `FORBIDDEN_ROLE` (403) : conseiller qui tente de retenir ; co-exploitant qui tente d'ajouter un avis de validation.
+- **E1 - PDF generation failure** - `PDF_GENERATION_FAILED` (503): the interface triggers the native print dialog (`window.print()`) with A4 layout.
+- **E2 - Strategy not found or outdated** - `STRATEGY_NOT_FOUND` (404): rerun the calculation.
+- **E3 - Note too long** - `VALIDATION_ERROR` (422) beyond 1,000 characters.
+- **E4 - Network failure on save** - the entered note is kept; retry without retyping.
+- **E5 - Double saving** - the button is disabled during the request.
+- **E6 - Insufficient rights** - `FORBIDDEN_ROLE` (403): advisor trying to select; co-farmer trying to add a validation opinion.
 
-**Règles de gestion**
+**Business rules**
 
-- Chaque note affiche l'auteur, son rôle et la date.
+- Each note shows the author, their role and the date.
 
-**Postconditions** : la décision est tracée dans l'historique partagé de l'exploitation et disponible hors ligne sous forme de PDF imprimable.
+**Postconditions**: the decision is recorded in the farm's shared history and available offline as a printable PDF.
 
-**Accès API** : `POST /parcels/{id}/strategies/save`, `GET /strategies/saved`, `POST /strategies/saved/{id}/notes`, `GET .../export.pdf`
+**API access**: `POST /parcels/{id}/strategies/save`, `GET /strategies/saved`, `POST /strategies/saved/{id}/notes`, `GET .../export.pdf`
 
 ---
 
-### CU16 - Consulter l'aide « Comment lire ces résultats »
+### UC16 - View the "How to read these results" help
 
 | | |
 |---|---|
-| **Acteurs** | Principaux : tous les utilisateurs. |
-| **Priorité / besoin** | M - BF8 |
-| **Préconditions** | L'utilisateur est connecté. |
+| **Actors** | Primary: all users. |
+| **Priority / need** | M - BF8 |
+| **Preconditions** | The user is logged in. |
 
-**Scénario nominal**
+**Main scenario**
 
-1. L'utilisateur ouvre l'écran « Comment lire ces résultats » depuis le menu, le diagnostic ou une fiche.
-2. L'écran explique la différence entre mesure satellite et mesure au sol, les niveaux de confiance et les limites de l'outil.
+1. The user opens the "How to read these results" screen from the menu, the diagnosis or a sheet.
+2. The screen explains the difference between satellite measurement and ground measurement, the confidence levels and the limits of the tool.
 
-**Scénarios alternatifs**
+**Alternative scenarios**
 
-- **A1 - Ouverture contextuelle** - depuis une bulle d'aide, l'écran s'ouvre à la rubrique concernée.
-- **A2 - Sans réseau** - le contenu est embarqué dans l'application et reste consultable.
-- **A3 - Langue** - le contenu suit la langue choisie (français, puis anglais).
+- **A1 - Contextual opening** - from a help bubble, the screen opens at the relevant section.
+- **A2 - Offline** - the content is embedded in the application and remains available.
+- **A3 - Language** - the content follows the chosen language (French, then English).
 
-**Exceptions et erreurs**
+**Exceptions and errors**
 
-- **E1 - Contenu indisponible** - si le contenu ne se charge pas, un résumé minimal embarqué est affiché.
+- **E1 - Content unavailable** - if the content fails to load, a minimal embedded summary is displayed.
 
-**Règles de gestion**
+**Business rules**
 
-- Contenu statique, sans appel API.
+- Static content, no API call.
 
-**Postconditions** : l'utilisateur comprend la portée et les limites des résultats.
+**Postconditions**: the user understands the scope and limits of the results.
 
-**Accès API** : aucun (contenu embarqué dans le frontend)
+**API access**: none (content embedded in the frontend)
 
 ---
 
-## Annexe A - Synthèse des erreurs par cas d'utilisation
+## Appendix A - Summary of errors by use case
 
-| Code | HTTP | Cas concernés |
+| Code | HTTP | Use cases concerned |
 |---|---|---|
-| `VALIDATION_ERROR` | 422 | CU1, CU2, CU6, CU7, CU11, CU12, CU15 |
-| `ACCOUNT_ALREADY_EXISTS` | 409 | CU1 |
-| `INVALID_CREDENTIALS`, `TOKEN_EXPIRED`, `TOKEN_INVALID` | 401 | CU3, CU13 |
-| `TOO_MANY_REQUESTS` | 429 | CU1, CU13 |
-| `FORBIDDEN_ROLE`, `NOT_FARM_MEMBER` | 403 | CU2 à CU15 |
-| `MEMBER_ALREADY_EXISTS`, `LAST_OWNER`, `VERSION_CONFLICT` | 409 | CU2, CU6, CU7, CU14, CU15 |
-| `INVALID_POLYGON` | 400 | CU4, CU14 |
-| `PARCEL_OVERLAP`, `PARCEL_NAME_TAKEN` | 409 | CU4, CU14 |
-| `CROP_NOT_FOUND`, `EXCLUDED_CROP`, `NO_CROP_AVAILABLE`, `NO_SUITABLE_CROP`, `INVALID_SCENARIO` | 422 | CU6, CU7, CU8, CU10, CU11 |
-| `FARM_NOT_FOUND`, `PARCEL_NOT_FOUND`, `STRATEGY_NOT_FOUND`, `REGION_NOT_SUPPORTED` | 404 | CU5, CU8, CU9, CU12, CU14, CU15 |
-| `PRECONDITION_FAILED` | 409 | CU8 |
-| `CLIMATE_DATA_UNAVAILABLE`, `ENGINE_UNAVAILABLE`, `PDF_GENERATION_FAILED` | 503 | CU5, CU8, CU10, CU11, CU12 |
+| `VALIDATION_ERROR` | 422 | UC1, UC2, UC6, UC7, UC11, UC12, UC15 |
+| `ACCOUNT_ALREADY_EXISTS` | 409 | UC1 |
+| `INVALID_CREDENTIALS`, `TOKEN_EXPIRED`, `TOKEN_INVALID` | 401 | UC3, UC13 |
+| `TOO_MANY_REQUESTS` | 429 | UC1, UC13 |
+| `FORBIDDEN_ROLE`, `NOT_FARM_MEMBER` | 403 | UC2 to UC15 |
+| `MEMBER_ALREADY_EXISTS`, `LAST_OWNER`, `VERSION_CONFLICT` | 409 | UC2, UC6, UC7, UC14, UC15 |
+| `INVALID_POLYGON` | 400 | UC4, UC14 |
+| `PARCEL_OVERLAP`, `PARCEL_NAME_TAKEN` | 409 | UC4, UC14 |
+| `CROP_NOT_FOUND`, `EXCLUDED_CROP`, `NO_CROP_AVAILABLE`, `NO_SUITABLE_CROP`, `INVALID_SCENARIO` | 422 | UC6, UC7, UC8, UC10, UC11 |
+| `FARM_NOT_FOUND`, `PARCEL_NOT_FOUND`, `STRATEGY_NOT_FOUND`, `REGION_NOT_SUPPORTED` | 404 | UC5, UC8, UC9, UC12, UC14, UC15 |
+| `PRECONDITION_FAILED` | 409 | UC8 |
+| `CLIMATE_DATA_UNAVAILABLE`, `ENGINE_UNAVAILABLE`, `PDF_GENERATION_FAILED` | 503 | UC5, UC8, UC10, UC11, UC12 |
 
-Le détail des messages et des actions du frontend figure dans le Contrat d'API v2, section 3.
+The detail of the messages and frontend actions is given in API Contract v2, section 3.
