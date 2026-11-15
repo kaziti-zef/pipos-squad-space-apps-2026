@@ -1,0 +1,777 @@
+{
+  "meta": {
+    "title": "AgriRot — Bien choisir quoi planter",
+    "description": "Des conseils simples pour choisir quoi planter, saison après saison, selon la pluie et la chaleur de votre région. C'est vous qui décidez."
+  },
+  "common": {
+    "disclaimer": "AgriRot soutient votre décision, il ne remplace pas votre jugement ni l'expertise agronomique locale.",
+    "disclaimerStrategies": "Outil d'aide à la décision : ces estimations soutiennent votre jugement et ne remplacent pas l'avis d'un agronome local.",
+    "backDashboard": "← Tableau de bord",
+    "backStrategies": "← Comparer les stratégies",
+    "cancel": "Annuler",
+    "close": "Fermer",
+    "exportPdf": "Exporter en PDF",
+    "farmName": "Ferme de Mbankomo",
+    "region": "Yaoundé et périphérie",
+    "plotName": "Bas-Fond Nord",
+    "unavailable": "Information indisponible",
+    "definition": "Définition : {term}"
+  },
+  "language": {
+    "label": "Langue",
+    "fr": "Français",
+    "en": "English"
+  },
+  "roles": {
+    "owner": "Agriculteur principal",
+    "co_farmer": "Co-exploitant",
+    "advisor": "Conseiller agricole"
+  },
+  "rolesLower": {
+    "owner": "agriculteur principal",
+    "co_farmer": "co-exploitant",
+    "advisor": "conseiller agricole"
+  },
+  "levels": {
+    "élevée": "élevée",
+    "moyenne": "moyenne",
+    "faible": "faible"
+  },
+  "crops": {
+    "mais": "Maïs",
+    "niebe": "Niébé",
+    "arachide": "Arachide",
+    "haricot": "Haricot",
+    "manioc": "Manioc",
+    "patate_douce": "Patate douce",
+    "igname": "Igname",
+    "tomate": "Tomate",
+    "plantain": "Plantain",
+    "gombo": "Gombo"
+  },
+  "months": [
+    "Janvier",
+    "Février",
+    "Mars",
+    "Avril",
+    "Mai",
+    "Juin",
+    "Juillet",
+    "Août",
+    "Septembre",
+    "Octobre",
+    "Novembre",
+    "Décembre"
+  ],
+  "monthsShort": [
+    "J",
+    "F",
+    "M",
+    "A",
+    "M",
+    "J",
+    "J",
+    "A",
+    "S",
+    "O",
+    "N",
+    "D"
+  ],
+  "nav": {
+    "menuLabel": "Menu de l'application",
+    "farm": "Ferme",
+    "dashboard": "Tableau de bord",
+    "parcels": "Mes parcelles",
+    "diagnostic": "Diagnostic NASA",
+    "terrain": "Données terrain",
+    "priorities": "Priorités",
+    "strategies": "Stratégies",
+    "history": "Historique",
+    "members": "Membres",
+    "nasaLive": "Services NASA : en direct",
+    "mobileLabel": "Navigation",
+    "mobileHome": "Accueil",
+    "mobileParcels": "Parcelles",
+    "mobileStrategies": "Stratégies",
+    "mobileHistory": "Historique",
+    "mobileFarm": "Ferme"
+  },
+  "indicators": {
+    "scoreAria": "Score {score} sur 100",
+    "outOf100": "/ 100",
+    "stabilityTitle": "Stabilité face au climat",
+    "stability": {
+      "1": "Faible",
+      "2": "Bonne",
+      "3": "Très bonne"
+    },
+    "confidence": "Confiance {level}"
+  },
+  "landing": {
+    "nav": {
+      "label": "Navigation principale",
+      "how": "Comment ça marche",
+      "sky": "Ce que voit le satellite",
+      "decide": "Vous décidez",
+      "login": "Se connecter"
+    },
+    "hero": {
+      "badge": "Une rotation des cultures plus intelligente, s'adaptant aux cultivateurs du monde entier.",
+      "title1": "Plantez mieux.",
+      "title2": "Récoltez plus.",
+      "subtitle": "Des conseils simples pour choisir quoi planter, saison après saison. C'est toujours vous qui décidez.",
+      "ctaStart": "Commencer, c'est gratuit",
+      "ctaExample": "Voir un exemple",
+      "scroll": "Découvrez comment ça marche"
+    },
+    "carousel": {
+      "alts": [
+        "Une agricultrice sourit, houe sur l'épaule, dans un champ verdoyant",
+        "Une agricultrice souriante dans son champ de maïs",
+        "Un agriculteur désherbe une rizière sous un ciel nuageux",
+        "Une agricultrice plante un jeune arbre à la houe"
+      ],
+      "pause": "Mettre en pause le défilement des photos",
+      "play": "Reprendre le défilement des photos",
+      "prev": "Photo précédente",
+      "next": "Photo suivante",
+      "choose": "Choisir une photo",
+      "photoN": "Photo {n} sur {total}"
+    },
+    "steps": {
+      "eyebrow": "Comment ça marche",
+      "title": "Quatre étapes, du champ à la décision.",
+      "items": [
+        {
+          "title": "Montrez votre champ",
+          "text": "Avec votre téléphone, dessinez le tour de votre champ sur la carte."
+        },
+        {
+          "title": "Regardez le temps de votre région",
+          "text": "La pluie, la chaleur et la terre des dernières années, expliquées simplement."
+        },
+        {
+          "title": "Dites ce qui compte pour vous",
+          "text": "Économiser l'eau, mieux gagner, garder une terre riche… Vous choisissez."
+        },
+        {
+          "title": "Choisissez parmi 3 conseils",
+          "text": "Ce que vous faites aujourd'hui, ce que nous conseillons, et une autre idée."
+        }
+      ]
+    },
+    "advice": {
+      "eyebrow": "Un exemple de conseil",
+      "field": "Champ du bas-fond",
+      "why": "Pourquoi ?",
+      "whyText": "Le niébé après le maïs nourrit votre terre : la récolte suivante sera meilleure, avec moins d'engrais.",
+      "cta": "Voir l'exemple complet",
+      "season": "Saison {n}",
+      "order": "Ordre des cultures conseillé"
+    },
+    "sky": {
+      "eyebrow": "Vu du ciel",
+      "title": "Les satellites regardent votre région pour vous.",
+      "text": "Chaque jour, des satellites de la NASA observent la terre. AgriRot transforme ce qu'ils voient en conseils simples. Mais c'est vous qui connaissez votre champ : ce que vous nous dites passe toujours en premier.",
+      "items": [
+        {
+          "name": "La pluie",
+          "text": "Combien il pleut, et quand la saison des pluies commence."
+        },
+        {
+          "name": "La chaleur",
+          "text": "Les mois trop chauds pour certaines cultures."
+        },
+        {
+          "name": "L'eau dans la terre",
+          "text": "Si votre terre est plutôt sèche ou humide en ce moment."
+        },
+        {
+          "name": "La santé des plantes",
+          "text": "Vue d'en haut, la verdure des champs de votre région."
+        }
+      ]
+    },
+    "decision": {
+      "imageAlt": "Une agricultrice sème à la main dans des sillons fraîchement préparés",
+      "cardBefore": "AgriRot donne des ",
+      "cardStrong": "conseils",
+      "cardAfter": ". Il ne remplace ni votre expérience, ni votre conseiller agricole.",
+      "eyebrow": "Vous gardez la décision",
+      "title": "Chaque conseil vous explique pourquoi, simplement.",
+      "rubrics": [
+        {
+          "title": "Pourquoi ce conseil",
+          "text": "ce qui le rend bon pour votre champ."
+        },
+        {
+          "title": "Sur quoi il s'appuie",
+          "text": "le temps de votre région et ce que vous nous avez dit."
+        },
+        {
+          "title": "Ce que vous y gagnez",
+          "text": "une terre plus riche, moins d'eau, de meilleures récoltes."
+        },
+        {
+          "title": "Ce qui manque",
+          "text": "les informations que vous pouvez encore ajouter."
+        },
+        {
+          "title": "Ce qu'il faut vérifier",
+          "text": "dans votre champ, avec votre conseiller agricole."
+        }
+      ],
+      "cta": "Commencer gratuitement"
+    },
+    "footer": {
+      "tagline": "Des conseils simples pour choisir quoi planter, saison après saison.",
+      "discover": "Découvrir",
+      "account": "Mon compte",
+      "createAccount": "Créer un compte",
+      "login": "Se connecter",
+      "example": "Voir un exemple",
+      "decideTitle": "C'est vous qui décidez",
+      "decideText": "AgriRot donne des conseils. Avant de changer vos cultures, parlez-en avec votre conseiller agricole.",
+      "rights": "© {year} AgriRot · Yaoundé, Cameroun",
+      "credits": "Images satellites : NASA"
+    }
+  },
+  "auth": {
+    "imageAlt": "Une agricultrice souriante dans son champ de maïs",
+    "quote": "« Je trace mon champ, je compare, et c'est moi qui décide. »",
+    "quoteSub": "Une ferme peut réunir un agriculteur principal, des co-exploitants et des conseillers agricoles.",
+    "progress": "Progression",
+    "steps": [
+      "1 · Votre compte",
+      "2 · Votre exploitation"
+    ],
+    "register": {
+      "pageTitle": "Créer un compte",
+      "title": "Créer votre compte",
+      "already": "Déjà inscrit ?",
+      "login": "Se connecter",
+      "fullName": "Nom complet",
+      "identifier": "Email ou numéro de téléphone",
+      "password": "Mot de passe",
+      "passwordShort": "Au moins 8 caractères.",
+      "continue": "Continuer",
+      "farmTitle": "Votre exploitation",
+      "farmSubtitle": "Vous en serez l'agriculteur principal.",
+      "farmName": "Nom de la ferme",
+      "country": "Pays",
+      "countryCm": "Cameroun",
+      "region": "Région",
+      "regionHelp": "Détermine le catalogue de cultures et le calendrier des saisons.",
+      "back": "Retour",
+      "create": "Créer mon exploitation"
+    },
+    "login": {
+      "pageTitle": "Se connecter",
+      "title": "Se connecter",
+      "noAccount": "Pas encore de compte ?",
+      "create": "Créer un compte",
+      "identifier": "Email ou numéro de téléphone",
+      "password": "Mot de passe",
+      "forgot": "Mot de passe oublié ?",
+      "submit": "Se connecter"
+    }
+  },
+  "dashboard": {
+    "pageTitle": "Tableau de bord",
+    "hello": "Bonjour, {name}",
+    "subtitle": "Ferme de Mbankomo · Yaoundé et périphérie · 3 membres",
+    "newParcel": "Nouvelle parcelle",
+    "kpiParcels": "Parcelles",
+    "kpiArea": "Surface totale",
+    "kpiConfidence": "Confiance des données",
+    "kpiConfidenceValue": "Moyenne",
+    "kpiAlerts": "Alertes",
+    "kpiAlertsValue": "stress hydrique",
+    "mapTitle": "Carte de la ferme",
+    "mapAria": "Carte satellite des parcelles de la ferme",
+    "satellite": "Vue satellite",
+    "alertTitle": "Stress hydrique probable · déc. → fév.",
+    "alertText": "Bas-Fond Nord — humidité du sol SMAP sous la normale.",
+    "alertCta": "Voir le diagnostic",
+    "completeness": {
+      "local": "Données terrain",
+      "history": "Historique",
+      "prefs": "Priorités"
+    },
+    "score": "Score {score}",
+    "toComplete": "À compléter",
+    "ctaStrategies": "Voir les stratégies",
+    "ctaComplete": "Compléter les données",
+    "ctaHistory": "Voir l'historique",
+    "emptyTitle": "Tracez votre premier champ",
+    "emptyText": "Dessinez le contour de votre parcelle sur la carte. AgriRot récupère ensuite automatiquement les données NASA de votre zone.",
+    "emptyCta": "Commencer le tracé"
+  },
+  "parcelNew": {
+    "pageTitle": "Nouvelle parcelle",
+    "searchLabel": "Rechercher un lieu",
+    "searchPlaceholder": "Rechercher un lieu (ex. Mbankomo)",
+    "myPosition": "Ma position",
+    "hint": "Cliquez sur chaque coin de votre champ, puis sur le premier point pour fermer le contour.",
+    "gpsDenied": "Position GPS refusée — carte centrée sur Yaoundé. Utilisez la recherche.",
+    "invalid": "Contour invalide :",
+    "nameLabel": "Nom de la parcelle",
+    "auto": "Calculé automatiquement",
+    "area": "Superficie",
+    "center": "Centre (lat, lon)",
+    "altitude": "Altitude (SRTM)",
+    "slope": "Pente (SRTM)",
+    "slopeValue": "3,2° · faible",
+    "nasaPreview": "Aperçu des données NASA de la zone",
+    "rainYear": "Pluie annuelle",
+    "tempAvg": "Temp. moyenne",
+    "rainySeasons": "Saisons de pluie",
+    "rainySeasonsValue": "2 / an",
+    "ndvi": "NDVI moyen",
+    "save": "Enregistrer et analyser"
+  },
+  "draw": {
+    "toolbar": "Outils de dessin",
+    "draw": "Tracer un polygone",
+    "edit": "Modifier les sommets",
+    "clear": "Effacer le tracé",
+    "showMap": "Afficher le plan",
+    "showSatellite": "Afficher la vue satellite",
+    "tipStart": "Cliquez pour placer le premier coin du champ.",
+    "tipCont": "Cliquez pour placer le coin suivant.",
+    "tipEnd": "Cliquez sur le premier point pour fermer le contour.",
+    "error": "<strong>Contour invalide :</strong> les côtés ne doivent pas se croiser.",
+    "editTip": "Déplacez les sommets pour ajuster le contour.",
+    "editSub": "Cliquez à nouveau sur « Modifier » pour terminer."
+  },
+  "diagnostic": {
+    "pageTitle": "Diagnostic NASA",
+    "breadcrumb": "Tableau de bord",
+    "title": "Diagnostic climatique NASA",
+    "subtitle": "Votre zone, mois par mois, comparée à la normale 1981–2024.",
+    "cta": "Confirmer et compléter mes informations →",
+    "calendarTitle": "Calendrier des saisons · Yaoundé",
+    "seasons": [
+      "Grande saison sèche",
+      "Pluies 1 · semis S1",
+      "Petite saison sèche",
+      "Pluies 2 · semis S2",
+      "Sèche"
+    ],
+    "legendStress": "Stress hydrique",
+    "legendBare": "Sol nu en saison des pluies",
+    "legendSelected": "Mois sélectionné",
+    "cacheStrong": "Données enregistrées le 12/11/2026",
+    "cacheText": "— NASA POWER ne répond pas pour le moment.",
+    "localStrong": "Jeu de données de démonstration",
+    "localText": "— sources NASA indisponibles, confiance faible.",
+    "chooseMonth": "Choisir un mois",
+    "rain": {
+      "title": "Pluie",
+      "unit": "mm / mois",
+      "zone": "Votre zone 2026",
+      "normal": "Normale",
+      "term": "Bilan hydrique",
+      "source": "GPM IMERG · NASA POWER"
+    },
+    "temp": {
+      "title": "Température",
+      "unit": "°C",
+      "zone": "Moyenne 2026",
+      "normal": "Normale",
+      "term": "Stress thermique",
+      "source": "NASA POWER · T2M"
+    },
+    "soil": {
+      "title": "Humidité du sol",
+      "unit": "anomalie",
+      "wet": "Plus humide",
+      "dry": "Plus sec que la normale",
+      "term": "Anomalie d'humidité du sol",
+      "source": "SMAP",
+      "sourceNote": "couche superficielle (0–5 cm) uniquement"
+    },
+    "ndvi": {
+      "title": "Végétation",
+      "unit": "NDVI",
+      "zone": "NDVI 2026",
+      "estimated": "Valeur estimée",
+      "term": "NDVI",
+      "source": "MODIS · 250 m"
+    },
+    "selectedMonth": "Mois sélectionné",
+    "monthYear": "{month} 2026",
+    "rows": {
+      "temp": "Température",
+      "rain": "Pluie",
+      "etp": "Évapotranspiration",
+      "wb": "Bilan hydrique",
+      "soil": "Anomalie humidité sol",
+      "ndvi": "NDVI",
+      "frost": "Risque de gel",
+      "quality": "Qualité"
+    },
+    "normal": "(normale {v})",
+    "frostNone": "Nul",
+    "quality": {
+      "ok": "Mesurée",
+      "interpolated": "Estimée (mois interpolé)",
+      "unavailable": "Indisponible"
+    },
+    "alerts": {
+      "water_stress": "Stress hydrique",
+      "dry_season": "Saison sèche",
+      "bare_soil_risk": "Risque de sol nu",
+      "heavy_rain": "Fortes pluies",
+      "heat_stress": "Stress thermique",
+      "frost_risk": "Risque de gel"
+    },
+    "noAlert": "Aucune alerte",
+    "satStrong": "Satellite ou sol ?",
+    "satText": "Le satellite couvre toute la zone mais estime et lisse. Si vous observez autre chose sur votre champ, corrigez la valeur à l'étape suivante : votre saisie prime.",
+    "resolution": "Résolution : {v}",
+    "seeDetails": "Détails",
+    "monthBarLabel": "Résumé du mois sélectionné",
+    "charts": {
+      "rain": "Pluie mensuelle comparée à la normale : la plus forte en {maxMonth} ({max} mm), la plus faible en {minMonth} ({min} mm).",
+      "temp": "Température moyenne mensuelle comparée à la normale : de {min} °C en {minMonth} à {max} °C en {maxMonth}.",
+      "soil": "Humidité du sol par rapport à la normale : plus sèche en {dry} ; plus humide en {wet}.",
+      "ndvi": "Vigueur de la végétation vue du ciel : de {min} en {minMonth} à {max} en {maxMonth}.",
+      "none": "aucun mois"
+    },
+    "expand": "Agrandir le graphique {title}",
+    "closeFull": "Fermer le plein écran"
+  },
+  "terrain": {
+    "pageTitle": "Données terrain",
+    "eyebrow": "Bas-Fond Nord · étape 2 sur 3",
+    "title": "Vos informations de terrain",
+    "subtitle": "Ce que vous savez de votre champ rend les recommandations plus fiables. « Je ne sais pas » est une réponse acceptée.",
+    "readOnlyStrong": "Lecture seule — rôle Conseiller agricole.",
+    "readOnlyText": "Seuls l'agriculteur principal et les co-exploitants modifient ces informations.",
+    "soil": "Sol",
+    "texture": "Texture",
+    "textures": [
+      "Sableux",
+      "Limoneux",
+      "Argileux",
+      "Argilo-limoneux",
+      "Sablo-limoneux"
+    ],
+    "ph": "pH du sol",
+    "phRange": "(3,0 à 10,0)",
+    "dontKnow": "Je ne sais pas",
+    "phDefault": "Valeur régionale par défaut · 5,5",
+    "confidenceReduced": "Confiance réduite (0,4)",
+    "drainage": "Drainage",
+    "drainageOpts": [
+      "Moyen",
+      "Bon",
+      "Faible"
+    ],
+    "organic": "Matière organique",
+    "organicOpts": [
+      "Je ne sais pas",
+      "Faible",
+      "Moyenne",
+      "Élevée"
+    ],
+    "regionalDefault": "Défaut régional",
+    "slope": "Pente du champ",
+    "slopeOpts": [
+      "Plat",
+      "Légère pente",
+      "Forte pente",
+      "Je ne sais pas"
+    ],
+    "water": "Eau",
+    "irrigation": "Irrigation disponible ?",
+    "yes": "Oui",
+    "no": "Non",
+    "drySeason": "Disponibilité en saison sèche",
+    "dryOpts": [
+      "Faible",
+      "Nulle",
+      "Bonne"
+    ],
+    "history": "Historique des 3 dernières saisons",
+    "inProgress": "en cours",
+    "fallow": "Jachère (repos)",
+    "other": "Autre culture…",
+    "cropOf": "Culture {season}",
+    "r1Warning": "Maïs deux saisons de suite : la règle R1 (même famille botanique) sera signalée dans votre stratégie actuelle.",
+    "back": "← Diagnostic",
+    "next": "Enregistrer · mes priorités →",
+    "confidenceTitle": "Indice de confiance",
+    "defaultsCount": "{n} réponse(s) « Je ne sais pas »",
+    "scaleLow": "Faible",
+    "scaleHigh": "Élevée",
+    "nasaTitle": "Ce que voient les satellites",
+    "nasaText": "Est-ce que cela ressemble à ce que vous avez vu dans votre champ ?",
+    "confirmed": "✓ Vous avez confirmé",
+    "correct": "Oui, c'est juste",
+    "fix": "Non",
+    "lockNote": "Modification réservée aux exploitants",
+    "slopeHint": "Si vous ne savez pas, AgriRot utilise la mesure du satellite : pente faible (environ 3°).",
+    "phValue": "Valeur du pH",
+    "phHint": "Glissez la barre ou tapez la valeur indiquée par l'analyse de sol.",
+    "dryHint": "Pendant la saison sèche, avez-vous encore de l'eau pour arroser ?",
+    "confidenceHint": "Plus vous répondez, plus les conseils sont fiables. « Je ne sais pas » baisse un peu la confiance.",
+    "scaleMid": "Moyenne",
+    "nasa": {
+      "rain": {
+        "label": "Pluie en mars",
+        "value": "120 mm",
+        "meaning": "Un mois bien arrosé, comme d'habitude",
+        "less": "Il a moins plu",
+        "more": "Il a plus plu"
+      },
+      "temp": {
+        "label": "Chaleur moyenne",
+        "value": "24 °C",
+        "meaning": "Temps doux, normal pour la saison",
+        "less": "Plus frais",
+        "more": "Plus chaud"
+      },
+      "ndvi": {
+        "label": "Couleur des plantes",
+        "value": "Plutôt vertes",
+        "meaning": "Les plantes poussent bien",
+        "less": "Moins vertes",
+        "more": "Plus vertes"
+      }
+    },
+    "corrected": "✓ Corrigé : {value}",
+    "fixQuestion": "Qu'avez-vous observé ?",
+    "planTitle": "Votre plan pour la suite",
+    "planHint": "Facultatif. Ajoutez dans l'ordre les cultures que vous voulez faire ensuite, sans limite de saisons. AgriRot en tiendra compte.",
+    "planEmpty": "Aucune culture prévue pour l'instant.",
+    "planAdd": "Ajouter",
+    "planChoose": "Culture à ajouter",
+    "planRemove": "Retirer {crop} du plan",
+    "planUp": "Avancer {crop}",
+    "planDown": "Reculer {crop}",
+    "planNext": "Ensuite"
+  },
+  "priorities": {
+    "pageTitle": "Priorités et contraintes",
+    "eyebrow": "Bas-Fond Nord · étape 3 sur 3",
+    "title": "Vos priorités et contraintes",
+    "subtitle": "Classez ce qui compte le plus pour vous : AgriRot en tient compte pour choisir les cultures.",
+    "orderTitle": "Ordre d'importance",
+    "labels": {
+      "water_saving": "Économiser l'eau",
+      "income": "Revenu",
+      "soil_health": "Santé du sol",
+      "nitrogen": "Apport en azote",
+      "erosion_control": "Lutte contre l'érosion",
+      "fodder": "Valeur fourragère"
+    },
+    "up": "Monter {label}",
+    "down": "Descendre {label}",
+    "reset": "Revenir à l'ordre conseillé (revenu, eau, sol)",
+    "constraints": "Contraintes",
+    "exclude": "Cultures à exclure",
+    "excludeHint": "— touchez pour exclure",
+    "tooMany": "Presque toutes les cultures sont exclues : les règles de rotation risquent d'être compromises.",
+    "back": "← Données terrain",
+    "calculate": "Calculer les stratégies"
+  },
+  "strategies": {
+    "pageTitle": "Comparer les stratégies",
+    "eyebrow": "Bas-Fond Nord · 4,85 ha · 6 saisons (2027–2029)",
+    "title": "Comparer les stratégies de rotation",
+    "liveData": "Données NASA en direct · calcul du 14/11/2026 à 11:30",
+    "footnote": "Le score (0–100) mesure l'adéquation à votre parcelle et à vos priorités. La stabilité indique à quel point ce score résiste aux scénarios de stress (pluie −20 %, +2 °C) : ce n'est pas un second score.",
+    "tags": {
+      "existing": "Stratégie 1 · Existante",
+      "recommended": "Stratégie 2 · Recommandée",
+      "alternative": "Stratégie 3 · Alternative"
+    },
+    "best": "Meilleur choix pour vos priorités",
+    "sequenceHint": "Séquence · touchez une saison pour changer la culture",
+    "r1": "⚠ R1 · même famille −25",
+    "r2": "+8 · légumineuse après culture exigeante (R2)",
+    "undo": "Annuler mes modifications",
+    "details": "Voir les détails",
+    "retain": "Retenir",
+    "incompatible": "{crop} incompatible à +{t} °C : aptitude nulle.",
+    "nonViable": "Non viable sous ce scénario.",
+    "changeCrop": "Changer la culture de {season}",
+    "modified": "modifié par vous",
+    "benefits": {
+      "existing": [
+        "Débouché local garanti"
+      ],
+      "recommended": [
+        "Azote restauré",
+        "Sol couvert",
+        "Revenu stable"
+      ],
+      "alternative": [
+        "Économie d'eau",
+        "Faible besoin en engrais"
+      ]
+    },
+    "mobile": {
+      "tabsLabel": "Stratégies",
+      "tabs": [
+        "Actuelle",
+        "Recommandée",
+        "Alternative"
+      ],
+      "details": "Détails",
+      "stability": "Stabilité",
+      "confidence": "Confiance"
+    },
+    "seasonsTitle": "Pourquoi deux saisons, S1 et S2 ?",
+    "seasonsText": "À Yaoundé, il pleut deux fois par an. S1 est la première saison des pluies (mars à juin), S2 la deuxième (septembre à novembre). Entre les deux, il fait trop sec pour semer sans arrosage : AgriRot propose donc une culture par saison des pluies, soit deux par an.",
+    "remindersTitle": "Rappels pour cette stratégie",
+    "remindersText": "Recevez un message avant chaque semis et chaque récolte.",
+    "remindersOn": "Rappels activés",
+    "remindersOff": "Activer les rappels",
+    "remindersNext": "Prochain rappel : semis du {crop}, fin février {year}."
+  },
+  "fiche": {
+    "pageTitle": "Fiche d'explication",
+    "computedOn": "Bas-Fond Nord · calculée le 14/11/2026",
+    "score": "Score",
+    "stability": "Stabilité",
+    "confidence": "Confiance",
+    "levelHigh": "Élevée",
+    "levelMid": "Moyenne",
+    "levelLow": "Faible",
+    "why": "Pourquoi cette stratégie ?",
+    "proofs": "Preuves utilisées",
+    "yourInputs": "Vos saisies",
+    "benefits": "Bénéfices attendus",
+    "benefitTitles": [
+      "Azote",
+      "Eau",
+      "Revenu",
+      "Érosion"
+    ],
+    "gaps": "Lacunes d'information",
+    "gapsPriority": "Lacunes d'information — à compléter en priorité",
+    "gapTag": "à confirmer",
+    "gapDefaultTag": "défaut",
+    "lowGaps": [
+      "pH du sol non renseigné : valeur régionale 5,5 utilisée.",
+      "Taux de matière organique non renseigné.",
+      "Historique des cultures incomplet (1 saison sur 3)."
+    ],
+    "complete": "Compléter mes données",
+    "risks": "Risques à vérifier localement",
+    "riskTags": [
+      "terrain",
+      "seuil"
+    ],
+    "riskFooter": "À vérifier avec votre conseiller agricole.",
+    "notes": "Notes de la ferme",
+    "validation": "✓ Validation",
+    "noteMeta": "· Conseiller agricole · 14/11 12:05",
+    "noteText": "Validé lors de la visite terrain. Prévoir un labour léger avant le semis de S1.",
+    "addNote": "Ajouter une note d'observation",
+    "notePlaceholder": "Ce que vous observez sur le terrain…",
+    "retain": "Retenir cette stratégie"
+  },
+  "history": {
+    "pageTitle": "Historique",
+    "retained": "Stratégie « {name} » retenue le {date}. Tous les membres de la ferme la voient.",
+    "eyebrow": "Bas-Fond Nord",
+    "title": "Historique partagé",
+    "filterLabel": "Filtrer l'historique",
+    "filters": {
+      "all": "Tout",
+      "strategy": "Stratégies",
+      "season": "Saisons",
+      "notes": "Notes"
+    },
+    "empty": "Aucun élément pour ce filtre.",
+    "retainedBy": "{date} · retenue par {name}",
+    "score": "Score {score}",
+    "confidence": "Confiance {level}",
+    "scenario": "Scénario : {v}",
+    "outdated": "⚠ Contour modifié depuis",
+    "open": "Ouvrir la fiche",
+    "season": "Saison",
+    "sownOn": "semis le {date}"
+  },
+  "members": {
+    "pageTitle": "Membres de la ferme",
+    "title": "Membres de la ferme",
+    "subtitle": "Tous les membres voient les parcelles, le diagnostic et l'historique partagé.",
+    "add": "Ajouter un membre",
+    "cols": {
+      "member": "Membre",
+      "role": "Rôle",
+      "status": "Statut",
+      "added": "Ajouté le",
+      "actions": "Actions"
+    },
+    "you": "(vous)",
+    "invitationSent": "Invitation envoyée",
+    "active": "● Actif",
+    "pending": "● En attente · expire le 21/11",
+    "transfer": "Transférer la propriété",
+    "remove": "Retirer",
+    "resend": "Renvoyer",
+    "roleOf": "Rôle de {name}",
+    "roleCards": [
+      {
+        "title": "Agriculteur principal",
+        "text": "Tous les droits : membres, parcelles, suppression, transfert de propriété."
+      },
+      {
+        "title": "Co-exploitant",
+        "text": "Trace et modifie les parcelles, saisit les données, retient une stratégie."
+      },
+      {
+        "title": "Conseiller agricole",
+        "text": "Consulte, simule et ajoute des avis de validation. Ne modifie pas les saisies."
+      }
+    ],
+    "modal": {
+      "title": "Ajouter un membre",
+      "identifier": "Email ou téléphone",
+      "coFarmerHint": "Édite parcelles et saisies",
+      "advisorHint": "Consulte, simule, valide",
+      "notFound": "Aucun compte ne correspond à cet identifiant. Vous pouvez envoyer une invitation, valable 7 jours.",
+      "send": "Envoyer l'invitation"
+    }
+  },
+  "errors": {
+    "title": "Un problème est survenu",
+    "text": "Cette page n'a pas pu s'afficher. Vos informations ne sont pas perdues. Réessayez dans un instant.",
+    "retry": "Réessayer",
+    "home": "Retour au tableau de bord",
+    "code": "Code incident : {id}",
+    "notFoundTitle": "Page introuvable",
+    "notFoundText": "Cette page n'existe pas ou a été déplacée.",
+    "notFoundCta": "Retour à l'accueil"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "open": "Ouvrir les notifications ({n} non lues)",
+    "close": "Fermer",
+    "markAll": "Tout marquer comme lu",
+    "empty": "Aucune notification.",
+    "items": {
+      "sowing": {
+        "title": "Semis dans 2 semaines",
+        "text": "Préparez le semis du maïs (S1) sur Bas-Fond Nord, début mars.",
+        "when": "Aujourd'hui"
+      },
+      "rain": {
+        "title": "Pluies plus faibles prévues",
+        "text": "Avril pourrait être plus sec que d'habitude sur Colline Est.",
+        "when": "Hier"
+      },
+      "ready": {
+        "title": "Stratégies prêtes",
+        "text": "Les 3 stratégies de Bas-Fond Nord ont été recalculées avec vos priorités.",
+        "when": "Il y a 3 jours"
+      }
+    }
+  }
+}
