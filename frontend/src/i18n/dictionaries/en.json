@@ -47,7 +47,15 @@
     "igname": "Yam",
     "tomate": "Tomato",
     "plantain": "Plantain",
-    "gombo": "Okra"
+    "gombo": "Okra",
+    "riz": "Rice",
+    "piment": "Chili pepper",
+    "macabo": "Cocoyam",
+    "folon": "Amaranth (folon)",
+    "soja": "Soybean",
+    "crotalaire": "Sunn hemp",
+    "mucuna": "Velvet bean (mucuna)",
+    "jachere": "Fallow"
   },
   "months": [
     "January",
@@ -308,15 +316,17 @@
     "emptyCta": "Start drawing",
     "kpiReady": "Plots ready",
     "kpiChosen": "Rotations chosen",
-    "subtitleFarm": "{farm} · {n} member(s)"
+    "subtitleFarm": "{farm} · {n} member(s)",
+    "edit": "Edit",
+    "editAria": "Edit or delete parcel {name}"
   },
   "parcelNew": {
     "pageTitle": "New plot",
     "searchLabel": "Search for a place",
-    "searchPlaceholder": "Search for a place (e.g. Mbankomo)",
+    "searchPlaceholder": "Village, town or coordinates (e.g. Mbankomo)",
     "myPosition": "My location",
     "hint": "Click on each corner of your field, then on the first point to close the outline.",
-    "gpsDenied": "GPS location refused — map centred on Yaoundé. Use the search.",
+    "gpsDenied": "Location refused. Allow location for this site in the browser, or use the search.",
     "invalid": "Invalid outline:",
     "nameLabel": "Plot name",
     "auto": "Calculated automatically",
@@ -333,7 +343,24 @@
     "ndvi": "Average NDVI",
     "save": "Save and analyse",
     "defaultName": "My plot",
-    "afterSave": "Calculated when saved"
+    "afterSave": "Calculated when saved",
+    "searchButton": "Search",
+    "searching": "Searching…",
+    "searchResults": "Places found",
+    "searchNoResult": "Place not found. Try a nearby village or town, or coordinates (3.85, 11.50).",
+    "searchError": "Search is not responding right now. Check your connection or move the map by hand.",
+    "gpsInsecure": "Phones only share their location with secure sites (https address). It works on the online site; when testing on the local network, use the search.",
+    "gpsUnavailable": "Location not found (weak GPS signal). Try again outdoors or use the search.",
+    "gpsLocating": "Finding your location…",
+    "editTitle": "Edit parcel",
+    "editHint": "To fix the outline, tap the pencil tool and move the points. You can also just change the name.",
+    "saveEdit": "Save",
+    "opening": "Saved, opening…",
+    "outlineChanged": "The outline changed: area, altitude and slope will be recalculated, and strategies already chosen will be flagged for review.",
+    "delete": "Delete this parcel",
+    "deleteConfirm": "Delete “{name}”? Its field data, priorities and history will be erased for every member. This cannot be undone.",
+    "deleteYes": "Yes, delete",
+    "deleting": "Deleting…"
   },
   "draw": {
     "toolbar": "Drawing tools",
@@ -347,7 +374,8 @@
     "tipEnd": "Click on the first point to close the outline.",
     "error": "<strong>Invalid outline:</strong> sides must not cross.",
     "editTip": "Drag the corners to adjust the outline.",
-    "editSub": "Click “Edit” again to finish."
+    "editSub": "Click “Edit” again to finish.",
+    "youAreHere": "You are here"
   },
   "diagnostic": {
     "pageTitle": "NASA diagnosis",
@@ -366,7 +394,7 @@
     "legendStress": "Water stress",
     "legendBare": "Bare soil in the rainy season",
     "legendSelected": "Selected month",
-    "cacheStrong": "Data saved on 12/11/2026",
+    "cacheStrong": "Data saved on {date}",
     "cacheText": "— NASA POWER is not responding right now.",
     "localStrong": "Demonstration dataset",
     "localText": "— NASA sources unavailable, low confidence.",
@@ -374,7 +402,7 @@
     "rain": {
       "title": "Rainfall",
       "unit": "mm / month",
-      "zone": "Your area 2026",
+      "zone": "Your area {year}",
       "normal": "Normal",
       "term": "Water balance",
       "source": "GPM IMERG · NASA POWER"
@@ -382,7 +410,7 @@
     "temp": {
       "title": "Temperature",
       "unit": "°C",
-      "zone": "2026 average",
+      "zone": "{year} average",
       "normal": "Normal",
       "term": "Heat stress",
       "source": "NASA POWER · T2M"
@@ -399,13 +427,13 @@
     "ndvi": {
       "title": "Vegetation",
       "unit": "NDVI",
-      "zone": "NDVI 2026",
+      "zone": "NDVI {year}",
       "estimated": "Estimated value",
       "term": "NDVI",
       "source": "MODIS · 250 m"
     },
     "selectedMonth": "Selected month",
-    "monthYear": "{month} 2026",
+    "monthYear": "{month} {year}",
     "rows": {
       "temp": "Temperature",
       "rain": "Rainfall",
@@ -501,7 +529,7 @@
       "None",
       "Good"
     ],
-    "history": "History of the last 3 seasons",
+    "history": "Your crops, season by season",
     "inProgress": "in progress",
     "fallow": "Fallow (rest)",
     "other": "Other crop…",
@@ -550,8 +578,8 @@
     },
     "corrected": "✓ Corrected: {value}",
     "fixQuestion": "What did you observe?",
-    "planTitle": "Your plan for what comes next",
-    "planHint": "Optional. Add, in order, the crops you want to grow next, with no limit on seasons. AgriRot will take it into account.",
+    "planTitle": "Coming seasons",
+    "planHint": "Optional. Each crop you add takes one season: the first will be sown in {season}, the next one the season after, and so on.",
     "planEmpty": "No crop planned yet.",
     "planAdd": "Add",
     "planChoose": "Crop to add",
@@ -560,7 +588,11 @@
     "planDown": "Move {crop} later",
     "planNext": "Then",
     "unknownSeason": "I don't know",
-    "eyebrowParcel": "{name} · step 2 of 3"
+    "eyebrowParcel": "{name} · step 2 of 3",
+    "calendarHint": "Two growing seasons a year: S1 (sown in March) and S2 (sown in August). Say what you grew, then what you plan to grow.",
+    "pastTitle": "The last 3 seasons",
+    "planAddFor": "{season}:",
+    "planChooseFor": "Crop planned for {season}"
   },
   "priorities": {
     "pageTitle": "Priorities and constraints",
@@ -585,7 +617,9 @@
     "tooMany": "Almost all crops are excluded: the rotation rules may not be met.",
     "back": "← Field data",
     "calculate": "Calculate the strategies",
-    "eyebrowParcel": "{name} · step 3 of 3"
+    "eyebrowParcel": "{name} · step 3 of 3",
+    "coverCrop": "cover crop",
+    "coverCropHint": "Velvet bean (mucuna) and sunn hemp are cover crops: they are not harvested, they feed and protect the soil between two crops."
   },
   "strategies": {
     "pageTitle": "Compare strategies",
@@ -645,7 +679,12 @@
     "computingHint": "AgriRot is combining NASA data for your area with your information. This can take a few seconds.",
     "recomputing": "Recalculating…",
     "computedAt": "NASA data · calculated on {date}",
-    "eyebrowParcel": "{name} · {area} ha · 6 seasons (2027–2029)"
+    "eyebrowParcel": "{name} · {area} ha",
+    "horizonLabel": "Plan length",
+    "horizonYear": "1 year",
+    "horizonYears": "{n} years",
+    "horizonHint": "2 seasons a year. Changing the length recomputes the plan.",
+    "plannedNote": "Planned rotation: your planned crops season by season, then your usual crops (your history) for the seasons you did not plan. Without history, those seasons stay fallow."
   },
   "fiche": {
     "pageTitle": "Explanation sheet",

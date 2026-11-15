@@ -101,6 +101,7 @@ export function StrategiesView({ data, parcelId }: { data: StrategiesResponse; p
                       index={k}
                       modified={!!r.modified[k]}
                       incompatible={temp > (CROP_BY_ID[cropId]?.heatLimit ?? 99)}
+                      excluded={remote?.excluded}
                       onChange={(c) => setCrop(s.id, k, c)}
                     />
                   </div>

@@ -63,6 +63,7 @@ export function MobileStrategies({ data, parcelId }: { data: StrategiesResponse;
               index={k}
               modified={!!r.modified[k]}
               incompatible={false}
+              excluded={remote?.excluded}
               onChange={(crop) => setCrop(r.base.id, k, crop)}
             />
           ))}

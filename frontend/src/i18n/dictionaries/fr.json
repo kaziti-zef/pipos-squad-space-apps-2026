@@ -47,7 +47,15 @@
     "igname": "Igname",
     "tomate": "Tomate",
     "plantain": "Plantain",
-    "gombo": "Gombo"
+    "gombo": "Gombo",
+    "riz": "Riz",
+    "piment": "Piment",
+    "macabo": "Macabo",
+    "folon": "Folon (amarante)",
+    "soja": "Soja",
+    "crotalaire": "Crotalaire",
+    "mucuna": "Mucuna",
+    "jachere": "Jachère"
   },
   "months": [
     "Janvier",
@@ -308,15 +316,17 @@
     "emptyCta": "Commencer le tracé",
     "kpiReady": "Parcelles prêtes",
     "kpiChosen": "Rotations choisies",
-    "subtitleFarm": "{farm} · {n} membre(s)"
+    "subtitleFarm": "{farm} · {n} membre(s)",
+    "edit": "Modifier",
+    "editAria": "Modifier ou supprimer la parcelle {name}"
   },
   "parcelNew": {
     "pageTitle": "Nouvelle parcelle",
     "searchLabel": "Rechercher un lieu",
-    "searchPlaceholder": "Rechercher un lieu (ex. Mbankomo)",
+    "searchPlaceholder": "Village, ville ou coordonnées (ex. Mbankomo)",
     "myPosition": "Ma position",
     "hint": "Cliquez sur chaque coin de votre champ, puis sur le premier point pour fermer le contour.",
-    "gpsDenied": "Position GPS refusée — carte centrée sur Yaoundé. Utilisez la recherche.",
+    "gpsDenied": "Position refusée. Autorisez la localisation pour ce site dans le navigateur, ou utilisez la recherche.",
     "invalid": "Contour invalide :",
     "nameLabel": "Nom de la parcelle",
     "auto": "Calculé automatiquement",
@@ -333,7 +343,24 @@
     "ndvi": "NDVI moyen",
     "save": "Enregistrer et analyser",
     "defaultName": "Ma parcelle",
-    "afterSave": "Calculé à l'enregistrement"
+    "afterSave": "Calculé à l'enregistrement",
+    "searchButton": "Chercher",
+    "searching": "Recherche…",
+    "searchResults": "Lieux trouvés",
+    "searchNoResult": "Lieu introuvable. Essayez le nom d'un village ou d'une ville proche, ou des coordonnées (3.85, 11.50).",
+    "searchError": "La recherche ne répond pas pour le moment. Vérifiez votre connexion ou déplacez la carte à la main.",
+    "gpsInsecure": "Le téléphone ne donne sa position qu'aux sites sécurisés (adresse en https). Sur le site en ligne, cela fonctionne ; en test sur le réseau local, utilisez la recherche.",
+    "gpsUnavailable": "Position introuvable (signal GPS faible). Réessayez à l'extérieur ou utilisez la recherche.",
+    "gpsLocating": "Recherche de votre position…",
+    "editTitle": "Modifier la parcelle",
+    "editHint": "Pour corriger le contour, touchez l'outil crayon puis déplacez les points. Vous pouvez aussi seulement changer le nom.",
+    "saveEdit": "Enregistrer",
+    "opening": "Enregistré, ouverture…",
+    "outlineChanged": "Le contour a changé : la surface, l'altitude et la pente seront recalculées, et les stratégies déjà retenues seront signalées comme à revoir.",
+    "delete": "Supprimer cette parcelle",
+    "deleteConfirm": "Supprimer « {name} » ? Ses données terrain, ses priorités et son historique seront effacés pour tous les membres. Cette action est définitive.",
+    "deleteYes": "Oui, supprimer",
+    "deleting": "Suppression…"
   },
   "draw": {
     "toolbar": "Outils de dessin",
@@ -347,7 +374,8 @@
     "tipEnd": "Cliquez sur le premier point pour fermer le contour.",
     "error": "<strong>Contour invalide :</strong> les côtés ne doivent pas se croiser.",
     "editTip": "Déplacez les sommets pour ajuster le contour.",
-    "editSub": "Cliquez à nouveau sur « Modifier » pour terminer."
+    "editSub": "Cliquez à nouveau sur « Modifier » pour terminer.",
+    "youAreHere": "Vous êtes ici"
   },
   "diagnostic": {
     "pageTitle": "Diagnostic NASA",
@@ -366,7 +394,7 @@
     "legendStress": "Stress hydrique",
     "legendBare": "Sol nu en saison des pluies",
     "legendSelected": "Mois sélectionné",
-    "cacheStrong": "Données enregistrées le 12/11/2026",
+    "cacheStrong": "Données enregistrées le {date}",
     "cacheText": "— NASA POWER ne répond pas pour le moment.",
     "localStrong": "Jeu de données de démonstration",
     "localText": "— sources NASA indisponibles, confiance faible.",
@@ -374,7 +402,7 @@
     "rain": {
       "title": "Pluie",
       "unit": "mm / mois",
-      "zone": "Votre zone 2026",
+      "zone": "Votre zone {year}",
       "normal": "Normale",
       "term": "Bilan hydrique",
       "source": "GPM IMERG · NASA POWER"
@@ -382,7 +410,7 @@
     "temp": {
       "title": "Température",
       "unit": "°C",
-      "zone": "Moyenne 2026",
+      "zone": "Moyenne {year}",
       "normal": "Normale",
       "term": "Stress thermique",
       "source": "NASA POWER · T2M"
@@ -399,13 +427,13 @@
     "ndvi": {
       "title": "Végétation",
       "unit": "NDVI",
-      "zone": "NDVI 2026",
+      "zone": "NDVI {year}",
       "estimated": "Valeur estimée",
       "term": "NDVI",
       "source": "MODIS · 250 m"
     },
     "selectedMonth": "Mois sélectionné",
-    "monthYear": "{month} 2026",
+    "monthYear": "{month} {year}",
     "rows": {
       "temp": "Température",
       "rain": "Pluie",
@@ -501,7 +529,7 @@
       "Nulle",
       "Bonne"
     ],
-    "history": "Historique des 3 dernières saisons",
+    "history": "Vos cultures, saison par saison",
     "inProgress": "en cours",
     "fallow": "Jachère (repos)",
     "other": "Autre culture…",
@@ -550,8 +578,8 @@
     },
     "corrected": "✓ Corrigé : {value}",
     "fixQuestion": "Qu'avez-vous observé ?",
-    "planTitle": "Votre plan pour la suite",
-    "planHint": "Facultatif. Ajoutez dans l'ordre les cultures que vous voulez faire ensuite, sans limite de saisons. AgriRot en tiendra compte.",
+    "planTitle": "Les saisons à venir",
+    "planHint": "Facultatif. Chaque culture ajoutée occupe une saison : la première sera semée en {season}, la suivante à la saison d'après, et ainsi de suite.",
     "planEmpty": "Aucune culture prévue pour l'instant.",
     "planAdd": "Ajouter",
     "planChoose": "Culture à ajouter",
@@ -560,7 +588,11 @@
     "planDown": "Reculer {crop}",
     "planNext": "Ensuite",
     "unknownSeason": "Je ne sais pas",
-    "eyebrowParcel": "{name} · étape 2 sur 3"
+    "eyebrowParcel": "{name} · étape 2 sur 3",
+    "calendarHint": "Deux saisons de culture par an : S1 (semis en mars) et S2 (semis en août). Indiquez ce que vous avez cultivé, puis ce que vous comptez cultiver.",
+    "pastTitle": "Les 3 dernières saisons",
+    "planAddFor": "{season} :",
+    "planChooseFor": "Culture prévue pour {season}"
   },
   "priorities": {
     "pageTitle": "Priorités et contraintes",
@@ -585,7 +617,9 @@
     "tooMany": "Presque toutes les cultures sont exclues : les règles de rotation risquent d'être compromises.",
     "back": "← Données terrain",
     "calculate": "Calculer les stratégies",
-    "eyebrowParcel": "{name} · étape 3 sur 3"
+    "eyebrowParcel": "{name} · étape 3 sur 3",
+    "coverCrop": "plante de couverture",
+    "coverCropHint": "Mucuna et crotalaire sont des plantes de couverture : on ne les récolte pas, elles nourrissent et protègent le sol entre deux cultures."
   },
   "strategies": {
     "pageTitle": "Comparer les stratégies",
@@ -645,7 +679,12 @@
     "computingHint": "AgriRot croise les données NASA de votre zone avec vos informations. Cela peut prendre quelques secondes.",
     "recomputing": "Nouveau calcul en cours…",
     "computedAt": "Données NASA · calcul du {date}",
-    "eyebrowParcel": "{name} · {area} ha · 6 saisons (2027–2029)"
+    "eyebrowParcel": "{name} · {area} ha",
+    "horizonLabel": "Durée du plan",
+    "horizonYear": "1 an",
+    "horizonYears": "{n} ans",
+    "horizonHint": "2 saisons par an. Changer la durée relance le calcul.",
+    "plannedNote": "Rotation prévue : vos cultures prévues saison par saison, puis vos habitudes (votre historique) pour les saisons que vous n'avez pas prévues. Sans historique, ces saisons restent en jachère."
   },
   "fiche": {
     "pageTitle": "Fiche d'explication",

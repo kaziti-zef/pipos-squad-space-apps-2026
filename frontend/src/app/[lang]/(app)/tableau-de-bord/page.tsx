@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { Droplet, Map as MapIcon, Plus } from "lucide-react";
+import { Droplet, Map as MapIcon, Pencil, Plus } from "lucide-react";
 import { DisclaimerBanner } from "@/components/ui/Banner";
 import { ButtonLink } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Indicators";
@@ -162,9 +162,18 @@ async function Dashboard() {
                         <CompletenessChip ok={p.data_completeness.history}>{d.completeness.history}</CompletenessChip>
                         <CompletenessChip ok={p.data_completeness.preferences}>{d.completeness.prefs}</CompletenessChip>
                       </div>
-                      <ButtonLink href={href(cta.href)} variant="secondary" className="min-h-10 self-start">
-                        {cta.label}
-                      </ButtonLink>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <ButtonLink href={href(cta.href)} variant="secondary" className="min-h-10">
+                          {cta.label}
+                        </ButtonLink>
+                        <Link
+                          href={href(`/parcelles/${p.id}/modifier`)}
+                          aria-label={fmt(d.editAria, { name: p.name })}
+                          className="inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-forest hover:bg-beige"
+                        >
+                          <Pencil aria-hidden className="size-4" /> {d.edit}
+                        </Link>
+                      </div>
                     </div>
                   );
                 })}

@@ -5,6 +5,7 @@ import { Banner, DisclaimerBanner } from "@/components/ui/Banner";
 import { ButtonLink } from "@/components/ui/Button";
 import { PageContainer, PageHeader } from "@/components/layout/PageHeader";
 import { ClimateDiagnostic } from "@/components/charts/ClimateDiagnostic";
+import { fmt } from "@/i18n/config";
 import { getI18n } from "@/i18n/server";
 import { API_ENABLED, loadClimate, loadParcel } from "@/lib/data/server";
 import type { DataSourceStatus } from "@/lib/types";
@@ -16,13 +17,13 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /** Bandeau du plan B (contrat §3.6) : statut renvoyé par l'API, ou `?source=…` en démo. */
-async function SourceBanner({ status }: { status: DataSourceStatus }) {
-  const { t } = await getI18n();
+async function SourceBanner({ status, cachedAt }: { status: DataSourceStatus; cachedAt: string | null }) {
+  const { t, lang } = await getI18n();
   const d = t.diagnostic;
   if (status === "fallback_cache")
     return (
       <Banner tone="info" rounded>
-        <strong>{d.cacheStrong}</strong> {d.cacheText}
+        <strong>{fmt(d.cacheStrong, { date: cachedAt ? new Date(cachedAt).toLocaleDateString(lang === "en" ? "en-GB" : "fr-FR") : "—" })}</strong> {d.cacheText}
       </Banner>
     );
   if (status === "fallback_local")
@@ -65,7 +66,7 @@ async function ClimateSection({ params, searchParams }: Pick<Props, "params" | "
   const status = API_ENABLED ? data.data_source_status : ((query.source as DataSourceStatus | undefined) ?? "live");
   return (
     <>
-      <SourceBanner status={status} />
+      <SourceBanner status={status} cachedAt={API_ENABLED ? data.cached_at : "2026-11-12T08:00:00Z"} />
       <ClimateDiagnostic data={data} />
     </>
   );

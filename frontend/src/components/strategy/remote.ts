@@ -16,6 +16,8 @@ export interface RemoteStrategies {
   /** Lien vers le détail, avec l'identifiant du calcul (?c=…). */
   detailHref: (id: StrategyType) => string;
   busy: boolean;
+  /** Cultures exclues dans les priorités : retirées des listes de choix. */
+  excluded: string[];
 }
 
 export const RemoteStrategiesContext = createContext<RemoteStrategies | null>(null);

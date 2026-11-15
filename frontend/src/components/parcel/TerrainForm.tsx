@@ -12,7 +12,9 @@ import { useApp } from "@/lib/api/app-context";
 import * as endpoints from "@/lib/api/endpoints";
 import { ApiError, reaction } from "@/lib/api/errors";
 import type { History, LocalInputs } from "@/lib/api/types";
-import { CROPS, cropStyle } from "@/lib/domain/crops";
+import { useSeasonText } from "@/components/ui/season";
+import { cropStyle } from "@/lib/domain/crops";
+import { seasonAt } from "@/lib/domain/seasons";
 import { cn, confidenceLevel, fr } from "@/lib/utils";
 
 /** Valeurs satellites présentées en langage courant (pas de NDVI, pas de poids affichés). */
@@ -20,8 +22,8 @@ const NASA_IDS = ["rain", "temp", "ndvi"] as const;
 type NasaId = (typeof NASA_IDS)[number];
 type NasaAnswer = "ok" | "fixing" | "less" | "more";
 
-/** Trois dernières saisons, de la plus ancienne à la plus récente (season_index -3, -2, -1). */
-const HISTORY_LABELS = ["2025-S2", "2026-S1", "2026-S2"] as const;
+/** Trois dernières saisons, de la plus ancienne à la plus récente (season_index -3, -2, -1 -> saisons -2, -1, 0). */
+const HISTORY_SEASONS = [-2, -1, 0] as const;
 const DEMO_HISTORY = ["mais", "mais", "manioc"];
 const FALLOW = "jachere";
 
@@ -71,7 +73,9 @@ const choice = (selected: boolean) =>
 export function TerrainForm({ parcelId, readOnly, initial }: { parcelId: string; readOnly: boolean; initial?: TerrainInitial }) {
   const { t, lang, href } = useI18n();
   const router = useRouter();
-  const { apiEnabled } = useApp();
+  const { apiEnabled, cropIds, cropName } = useApp();
+  const seasonText = useSeasonText();
+  const historySeasons = HISTORY_SEASONS.map((s) => seasonAt(s));
   const tr = t.terrain;
   const local = initial?.local ?? null;
   const soil = local?.soil;
@@ -132,12 +136,21 @@ export function TerrainForm({ parcelId, readOnly, initial }: { parcelId: string;
         pest_history: local?.pest_history ?? [],
         planned_rotation: plan.slice(0, 12).map((crop_id, i) => ({ season: i + 1, crop_id })),
       };
-      const savedLocal = await endpoints.inputs.putLocal(parcelId, body, versions.local);
       const seasons = history.flatMap((crop_id, i) =>
-        crop_id ? [{ season_index: (i - 3) as -3 | -2 | -1, crop_id, label: HISTORY_LABELS[i] }] : [],
+        crop_id ? [{ season_index: (i - 3) as -3 | -2 | -1, crop_id, label: historySeasons[i].key }] : [],
       );
-      const savedHistory = await endpoints.inputs.putHistory(parcelId, { seasons }, versions.history);
-      setVersions({ local: savedLocal.version, history: savedHistory.version });
+      // Les deux enregistrements sont indépendants : envoyés en parallèle (attente divisée par deux).
+      const [savedLocal, savedHistory] = await Promise.allSettled([
+        endpoints.inputs.putLocal(parcelId, body, versions.local),
+        endpoints.inputs.putHistory(parcelId, { seasons }, versions.history),
+      ]);
+      // Garder la version de ce qui a réussi, pour qu'un nouvel essai ne provoque pas de faux conflit.
+      setVersions((v) => ({
+        local: savedLocal.status === "fulfilled" ? savedLocal.value.version : v.local,
+        history: savedHistory.status === "fulfilled" ? savedHistory.value.version : v.history,
+      }));
+      if (savedLocal.status === "rejected") throw savedLocal.reason;
+      if (savedHistory.status === "rejected") throw savedHistory.reason;
       router.push(href(`/parcelles/${parcelId}/priorites`));
     } catch (err) {
       if (err instanceof ApiError && reaction(err) === "reload_conflict") setError(t.api.conflict);
@@ -293,16 +306,23 @@ export function TerrainForm({ parcelId, readOnly, initial }: { parcelId: string;
           </Section>
 
           <Section n={3} title={tr.history}>
+            <p className="-mt-2 text-sm leading-[1.5] text-ink-muted">{tr.calendarHint}</p>
+            <h3 className="font-display text-base font-semibold">{tr.pastTitle}</h3>
             <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3">
-              {HISTORY_LABELS.map((label, i) => {
+              {historySeasons.map((season, i) => {
                 const crop = history[i];
                 const style = crop && crop !== FALLOW ? cropStyle(crop) : null;
-                const name = crop === FALLOW ? tr.fallow : crop ? (t.crops[crop as keyof typeof t.crops] ?? crop) : tr.unknownSeason;
+                const name = crop === FALLOW ? tr.fallow : crop ? (t.crops[crop as keyof typeof t.crops] ?? cropName(crop) ?? crop) : tr.unknownSeason;
+                const { title, months } = seasonText.text(season);
+                const label = `${title} (${months})`;
                 return (
-                  <div key={label} className="flex flex-col gap-2.5 rounded-xl border-[1.5px] border-[#e8e1d4] p-3.5">
-                    <span className="text-sm font-semibold text-ink-muted">
-                      {label}
-                      {i === HISTORY_LABELS.length - 1 && ` · ${tr.inProgress}`}
+                  <div key={season.key} className="flex flex-col gap-2.5 rounded-xl border-[1.5px] border-[#e8e1d4] p-3.5">
+                    <span className="flex flex-col text-sm leading-tight">
+                      <span className="font-bold text-ink-soft">
+                        {title}
+                        {i === historySeasons.length - 1 && <span className="font-semibold text-ink-muted"> · {tr.inProgress}</span>}
+                      </span>
+                      <span className="text-[13px] text-ink-muted">{months}</span>
                     </span>
                     <div className="flex items-center gap-2.5">
                       <span className="flex size-10 items-center justify-center rounded-md" style={{ background: style?.bg ?? "var(--color-sand-200)" }}>
@@ -319,9 +339,9 @@ export function TerrainForm({ parcelId, readOnly, initial }: { parcelId: string;
                     >
                       <option value="">{tr.unknownSeason}</option>
                       <option value={FALLOW}>{tr.fallow}</option>
-                      {CROPS.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {t.crops[c.id as keyof typeof t.crops]}
+                      {cropIds.map((id) => (
+                        <option key={id} value={id}>
+                          {t.crops[id as keyof typeof t.crops] ?? cropName(id) ?? id}
                         </option>
                       ))}
                     </select>

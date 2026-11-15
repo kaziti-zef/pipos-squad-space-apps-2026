@@ -12,7 +12,7 @@ import * as endpoints from "@/lib/api/endpoints";
 import { ApiError, reaction } from "@/lib/api/errors";
 import type { Preferences } from "@/lib/api/types";
 import { fmt } from "@/i18n/config";
-import { CROPS } from "@/lib/domain/crops";
+import { SERVICE_PLANTS } from "@/lib/domain/crops";
 import type { PriorityKey } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -44,7 +44,7 @@ function initialOrder(prefs: Preferences | null): PriorityKey[] {
 export function PrioritiesForm({ parcelId, initial = null }: { parcelId: string; initial?: Preferences | null }) {
   const { t, href } = useI18n();
   const router = useRouter();
-  const { apiEnabled, role } = useApp();
+  const { apiEnabled, role, cropIds, cropName } = useApp();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [version, setVersion] = useState(initial?.version ?? 0);
@@ -132,23 +132,25 @@ export function PrioritiesForm({ parcelId, initial = null }: { parcelId: string;
               {pr.exclude} <span className="font-medium text-ink-muted">{pr.excludeHint}</span>
             </p>
             <div className="flex flex-wrap gap-2">
-              {CROPS.map((c) => {
-                const ex = !!excluded[c.id];
+              {cropIds.map((id) => {
+                const ex = !!excluded[id];
                 return (
                   <button
-                    key={c.id}
+                    key={id}
                     type="button"
                     aria-pressed={ex}
-                    onClick={() => setExcluded((s) => ({ ...s, [c.id]: !ex }))}
+                    onClick={() => setExcluded((s) => ({ ...s, [id]: !ex }))}
                     className={cn(tog, ex ? "border-danger-600 bg-danger-100 text-danger-800 line-through" : "border-field bg-white")}
                   >
                     {ex && "✕ "}
-                    {t.crops[c.id as keyof typeof t.crops]}
+                    {t.crops[id as keyof typeof t.crops] ?? cropName(id) ?? id}
+                    {SERVICE_PLANTS.has(id) && <span className="font-medium text-ink-muted"> · {pr.coverCrop}</span>}
                   </button>
                 );
               })}
             </div>
-            {excludedCount >= 8 && (
+            <p className="mt-2 text-[13px] leading-[1.5] text-ink-muted">{pr.coverCropHint}</p>
+            {excludedCount >= cropIds.length - 2 && (
               <p role="alert" className="mt-3 flex gap-2 rounded-md bg-warn-100 p-3 text-sm leading-[1.45] text-warn-800">
                 <TriangleAlert aria-hidden className="size-[18px] shrink-0" />
                 {pr.tooMany}

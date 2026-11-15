@@ -205,6 +205,8 @@ function Unavailable({ text }: { text: string }) {
 export function ClimateDiagnostic({ data }: { data: ClimateResponse }) {
   const { t, lang } = useI18n();
   const d = t.diagnostic;
+  // Année des données affichées (backend : dernière année complète) ; les données de démo n'en portent pas.
+  const year = data.year ?? 2026;
   const [sel, setSel] = useState(0);
   // Barre résumé du mois (audit B6) : visible seulement quand le détail du mois est hors de l'écran
   // (sur mobile et écrans moyens, il est tout en bas, loin des graphiques où l'on clique).
@@ -254,7 +256,7 @@ export function ClimateDiagnostic({ data }: { data: ClimateResponse }) {
           unit={d.rain.unit}
           term={d.rain.term}
           definition={data.glossary.water_balance ?? d.unavailable}
-          legend={[[d.rain.zone, sw("var(--color-chart-rain)")], [d.rain.normal, sw("var(--color-chart-normal)", 2)]]}
+          legend={[[fmt(d.rain.zone, { year }), sw("var(--color-chart-rain)")], [d.rain.normal, sw("var(--color-chart-normal)", 2)]]}
           footer={<Src>{d.rain.source}</Src>}
           summary={summaries.rain}
           selected={sel}
@@ -276,7 +278,7 @@ export function ClimateDiagnostic({ data }: { data: ClimateResponse }) {
           unit={d.temp.unit}
           term={d.temp.term}
           definition={data.glossary.heat ?? d.heatDefinition}
-          legend={[[d.temp.zone, sw("var(--color-chart-temp)", 3)], [d.temp.normal, sw("var(--color-chart-gray)", 2)]]}
+          legend={[[fmt(d.temp.zone, { year }), sw("var(--color-chart-temp)", 3)], [d.temp.normal, sw("var(--color-chart-gray)", 2)]]}
           footer={<Src>{d.temp.source}</Src>}
           summary={summaries.temp}
           selected={sel}
@@ -333,7 +335,7 @@ export function ClimateDiagnostic({ data }: { data: ClimateResponse }) {
           term={d.ndvi.term}
           definition={data.glossary.ndvi ?? d.unavailable}
           legend={[
-            [d.ndvi.zone, sw("var(--color-forest-700)", 3)],
+            [fmt(d.ndvi.zone, { year }), sw("var(--color-forest-700)", 3)],
             [d.ndvi.estimated, <span key="e" className="inline-block size-2.5 rounded-full border-[1.5px] border-dashed border-forest-700 bg-white" />],
           ]}
           footer={<Src>{d.ndvi.source}</Src>}
@@ -379,7 +381,7 @@ export function ClimateDiagnostic({ data }: { data: ClimateResponse }) {
           className="fixed inset-x-3 bottom-[84px] z-30 flex items-center gap-3 rounded-2xl bg-forest-950 px-4 py-2.5 text-white shadow-float md:inset-x-auto md:bottom-6 md:right-8 md:max-w-[520px]"
         >
           <div className="min-w-0 flex-1">
-            <p className="font-display text-[15px] font-semibold">{fmt(d.monthYear, { month: t.months[sel] })}</p>
+            <p className="font-display text-[15px] font-semibold">{fmt(d.monthYear, { month: t.months[sel], year })}</p>
             <p className="truncate text-sm text-mist-soft">
               {fr(m.rain_mm, 0, lang)} mm · {fr(m.temp_avg_c, 1, lang)} °C
               {m.alerts[0] && d.alerts[m.alerts[0]] && ` · ${d.alerts[m.alerts[0]]}`}
@@ -397,7 +399,7 @@ export function ClimateDiagnostic({ data }: { data: ClimateResponse }) {
 
       <aside ref={aside} className="card flex flex-[1_1_280px] scroll-mt-6 flex-col gap-1.5 p-5">
         <p className="eyebrow text-ink-muted">{d.selectedMonth}</p>
-        <h2 className="mb-2 font-display text-2xl font-bold">{fmt(d.monthYear, { month: t.months[sel] })}</h2>
+        <h2 className="mb-2 font-display text-2xl font-bold">{fmt(d.monthYear, { month: t.months[sel], year })}</h2>
         <div className="mb-1.5 flex flex-wrap gap-1.5">
           {m.alerts.length ? (
             m.alerts.filter((a) => d.alerts[a]).map((a) => (

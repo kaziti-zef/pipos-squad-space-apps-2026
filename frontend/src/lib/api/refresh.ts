@@ -8,7 +8,7 @@ export interface Jetons { access_token: string; refresh_token?: string; expires_
 export async function demanderRenouvellement(refresh: string, lang: string): Promise<Jetons | null> {
   try {
     const r = await fetch(`${API_URL}/auth/refresh`, {
-      method: "POST", cache: "no-store",
+      method: "POST", cache: "no-store", signal: AbortSignal.timeout(15_000),
       headers: { "Content-Type": "application/json", "Accept-Language": lang },
       body: JSON.stringify({ refresh_token: refresh }),
     });
