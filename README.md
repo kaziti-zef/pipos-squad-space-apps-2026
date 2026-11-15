@@ -45,7 +45,7 @@ AgriRot is **global by design**. Its first configuration is Cameroon, because th
 
 The model combines, in a single score, the suitability of each crop to the conditions, the effect of one crop on the next, the effect on soil health, risk under different climate scenarios and the farmer's preferences. The best sequence of crops is found by dynamic programming, which allows the plan to be recalculated instantly after every change.
 
-The full model, with its assumptions and limits, is in [`docs/modele_mathematique.pdf`](docs/modele_mathematique.pdf).
+The full model, with its assumptions and limits, is in [`docs/modele_mathematique.pdf`](docs/methodology.pdf).
 
 ## NASA data used
 
