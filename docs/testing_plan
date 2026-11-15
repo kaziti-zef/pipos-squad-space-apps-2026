@@ -1,0 +1,22 @@
+# 09 — Testing Plan and Acceptance Criteria
+
+Before feature freeze (≈ 4 hours before the official deadline), the pytest suite must validate five blocking criteria.
+
+## Backend test files
+| File | Mandatory assertions |
+|------|----------------------|
+| `test_scoring.py` | f_k(x) = 1 on [b, c]; decreases linearly on ramps; 0 outside [a, d]; one factor at 0 ⇒ A = 0 |
+| `test_rules_and_search.py` | On the Yaoundé reference: Maize → Cowpea scores strictly higher than Maize → Maize; an excluded crop never appears; Strategy 3 differs from Strategy 2 by at least 3 seasons |
+| `test_nasa_cleaner.py` | `-999` removed; exact mm/day → mm/month conversion; Plan B triggers on simulated timeout |
+| `test_api_endpoints.py` | Full end-to-end: register → create farm → add advisor → draw polygon → NASA diagnostic → 3 strategies → PDF export; clean rejection of invalid polygons |
+
+## Wider test plan
+- **Engine**: trapezoid at bounds and inside; suitability; score with bonuses and penalties; each rule R1–R9.
+- **Reference scenarios**: legume after maize beats maize after maize; excluded crop never appears; high-water crop drops without irrigation or rain.
+- **Data**: −999 ignored; missing months handled; unit consistency.
+- **API**: expected responses and clear errors (empty parcel, invalid polygon).
+- **End-to-end**: one test plot near Yaoundé, from drawing to 3 strategies and the sheet.
+- **ML**: comparison with climatology on the test period; calibration scores per year and region.
+- **Users**: 2–3 people test on a phone, unaided, reading the explanation sheet.
+- **Demo**: timed 30-second rehearsal, with Plan B (recorded data) if the network fails.
+- Unit tests of the core should run in < 0.1 s.
