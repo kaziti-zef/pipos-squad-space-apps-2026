@@ -1,0 +1,325 @@
+@import "tailwindcss";
+
+/* ───────────────────────── AgriRot — tokens (voir docs/CHARTE_GRAPHIQUE.md) ───────────────────────── */
+@theme {
+  /* Marque */
+  --color-forest-950: #0e3b20;
+  --color-forest: #14532d;
+  --color-forest-700: #166534; /* 6,2:1 sur beige, 7,1:1 sur blanc (audit A1) */
+  --color-leaf: #22c55e;
+  --color-leaf-600: #16a34a;
+  --color-leaf-300: #86efac;
+  --color-leaf-100: #dcfce7;
+  --color-leaf-50: #f0fdf4;
+  --color-mist: #e7f5ec;
+  --color-mist-muted: #a7c4b0;
+  --color-mist-soft: #c9decf;
+  --color-mist-200: #d3e6d9;
+
+  /* Neutres chauds */
+  --color-beige: #f5efe6;
+  --color-sand: #e9e0d0;
+  --color-sand-200: #f1ece3;
+  --color-sand-100: #faf7f2;
+  --color-sand-150: #f3eee5;
+  --color-line: #e3dacb;
+  --color-line-soft: #efe8dc;
+  --color-field: #dcd2c2;
+  --color-field-strong: #c9bfae;
+  --color-stone: #eeeae3;
+
+  /* Texte */
+  --color-ink: #17251c;
+  --color-ink-soft: #3b4a40;
+  --color-ink-muted: #55645a;
+
+  /* Sémantique */
+  --color-warn-50: #fffbeb;
+  --color-warn-100: #fef3c7;
+  --color-warn-300: #fcd34d;
+  --color-warn-200: #fde68a;
+  --color-warn-600: #b45309;
+  --color-warn-700: #92400e;
+  --color-warn-800: #78350f;
+  --color-danger-100: #fee2e2;
+  --color-danger-300: #fca5a5;
+  --color-danger-600: #b91c1c;
+  --color-danger-800: #7f1d1d;
+  --color-info-50: #f8faff;
+  --color-info-100: #dbeafe;
+  --color-info-soft: #eef2ff;
+  --color-info-600: #1e40af;
+  --color-info-800: #1e3a8a;
+
+  /* Familles botaniques */
+  --color-poaceae: #f59e0b;
+  --color-fabaceae: #22c55e;
+  --color-euphorbiaceae: #a16207;
+  --color-convolvulaceae: #c2410c;
+  --color-dioscoreaceae: #7c3aed;
+  --color-solanaceae: #dc2626;
+  --color-musaceae: #0e7490;
+  --color-root-100: #ede3d3;
+  --color-root-800: #5b3a12;
+  --color-sweet-100: #fde7d7;
+  --color-sweet-800: #9a3412;
+  --color-yam-100: #f3e8ff;
+  --color-yam-800: #6b21a8;
+  --color-dry-season: #f3e6cf;
+  --color-dry-season-ink: #6b4a16;
+  --color-rain-season: #cdefd8;
+
+  /* Données */
+  --color-chart-rain: #3b82f6;
+  --color-chart-normal: #1e293b;
+  --color-chart-temp: #ea580c;
+  --color-chart-wet: #0e7490;
+  --color-chart-dry: #c2410c;
+  --color-chart-gray: #9ca3af;
+  --color-score-mid: #d97706;
+
+  /* Polices (variables posées par next/font dans layout.tsx) */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+
+  /* Rayons */
+  --radius-xs: 8px;
+  --radius-sm: 10px;
+  --radius-md: 12px;
+  --radius-lg: 14px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-3xl: 22px;
+  --radius-4xl: 24px;
+
+  /* Ombres */
+  --shadow-card: 0 1px 2px rgb(20 83 45 / 0.06), 0 8px 24px rgb(20 83 45 / 0.06);
+  --shadow-float: 0 4px 16px rgb(0 0 0 / 0.18);
+  --shadow-pop: 0 8px 20px rgb(0 0 0 / 0.2);
+
+  /* Largeurs */
+  --container-landing: 1280px;
+  --container-app: 1180px;
+  --container-wide: 1240px;
+  --container-narrow: 1080px;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  /* Défilement progressif vers les ancres (#comment, #donnees…), sauf si « réduire les animations ».
+     data-scroll-behavior="smooth" sur <html> (layout.tsx) garde les changements de page instantanés. */
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+  /* Petite marge au-dessus des sections atteintes par une ancre. */
+  section[id] {
+    scroll-margin-top: 24px;
+  }
+  body {
+    @apply bg-beige font-sans text-ink antialiased;
+  }
+  a {
+    @apply text-forest-700 hover:text-forest;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  /* Double anneau (blanc + vert forêt) : visible sur fond clair, sombre, photo et boutons verts. */
+  :focus-visible {
+    outline: 3px solid var(--color-forest-950);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 2px #fff;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl bg-white shadow-card;
+  }
+  .field-input {
+    @apply min-h-12 w-full rounded-md border-[1.5px] border-field bg-white px-3.5 text-[15px] text-ink outline-none transition focus:border-leaf focus:ring-4 focus:ring-leaf/20 disabled:cursor-not-allowed disabled:bg-sand-100 disabled:text-ink-muted;
+  }
+  .eyebrow {
+    @apply text-[13px] font-semibold uppercase tracking-[1.5px];
+  }
+  .sr-only-focusable:not(:focus) {
+    @apply sr-only;
+  }
+}
+
+/* Leaflet : contrôles accordés à la charte */
+.leaflet-container {
+  font-family: var(--font-sans);
+  background: #56733f;
+}
+/* Uniquement le zoom : la barre d'outils de tracé est un composant React (ParcelDrawMap). */
+.leaflet-control-zoom a {
+  width: 44px !important;
+  height: 44px !important;
+  line-height: 44px !important;
+  color: var(--color-ink) !important;
+}
+.leaflet-control-zoom.leaflet-bar {
+  border: 0 !important;
+  border-radius: 14px !important;
+  overflow: hidden;
+  box-shadow: var(--shadow-float) !important;
+}
+/* Infobulles de Leaflet.draw aux couleurs de la charte */
+.leaflet-draw-tooltip {
+  background: var(--color-forest) !important;
+  border: 0 !important;
+  border-radius: 10px !important;
+  color: #fff !important;
+  font: 500 13px/1.4 var(--font-sans) !important;
+  padding: 6px 10px !important;
+}
+.leaflet-draw-tooltip::before {
+  border-right-color: var(--color-forest) !important;
+}
+.leaflet-draw-tooltip-subtext {
+  color: var(--color-leaf-300) !important;
+}
+.leaflet-error-draw-tooltip {
+  background: var(--color-danger-100) !important;
+  color: var(--color-danger-800) !important;
+}
+.parcel-label {
+  background: #fff;
+  border: 0;
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-ink);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.2);
+}
+.parcel-label::before {
+  display: none;
+}
+.parcel-label--warn {
+  background: var(--color-warn-100);
+  color: var(--color-warn-800);
+}
+
+/* ───────────── Accueil : animations en CSS pur (aucun JavaScript requis pour l'affichage) ─────────────
+   Dans @layer components : les utilitaires Tailwind ([animation-delay:…], [animation-duration:…])
+   peuvent ainsi les surcharger élément par élément. */
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+@keyframes hero-kenburns {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.08);
+  }
+}
+@keyframes hero-progress-x {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes hero-progress-y {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+@keyframes sky-cloud {
+  from {
+    transform: translateX(-320px);
+  }
+  to {
+    transform: translateX(calc(100vw + 40px));
+  }
+}
+@keyframes hero-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(4px);
+  }
+}
+
+@layer components {
+  .hero-rise {
+    animation: hero-rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .hero-kenburns {
+    animation: hero-kenburns 9s ease-out both;
+  }
+  /* Barre de progression du carrousel : horizontale sur mobile, verticale sur ordinateur. */
+  .hero-progress {
+    transform-origin: left center;
+    animation-name: hero-progress-x;
+    animation-timing-function: linear;
+    animation-fill-mode: forwards;
+  }
+  @media (min-width: 48rem) {
+    .hero-progress {
+      transform-origin: center top;
+      animation-name: hero-progress-y;
+    }
+  }
+  [data-paused="true"] .hero-kenburns {
+    animation-play-state: paused;
+  }
+  .sky-cloud {
+    position: absolute;
+    left: 0;
+    animation: sky-cloud 90s linear infinite;
+    will-change: transform;
+  }
+  .hero-bounce {
+    animation: hero-bounce 1.6s ease-in-out infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  /* La barre de progression rythme le carrousel : elle garde sa durée réelle
+     (le défilement automatique est arrêté par défaut dans ce mode). */
+  .hero-progress {
+    animation-duration: 6000ms !important;
+  }
+  .hero-kenburns,
+  .hero-bounce {
+    animation: none !important;
+  }
+  /* Un nuage immobile n'a pas de sens : on les retire. */
+  .sky-cloud {
+    display: none;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+}
