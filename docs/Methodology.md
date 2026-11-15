@@ -1,8 +1,8 @@
-# AgroRot Mathematical Model
+# AgriRot Mathematical Model
 
 **Six transparent and explainable computation axes for crop rotation recommendation**
 
-NASA Space Apps Challenge 2026 — challenge "Changing terrain: adapting farms with NASA data"
+NASA Space Apps Challenge 2026 — challenge "Field Shift: Adapting Farms with NASA Data"
 
 Version 1.0 — 14 November 2026
 
