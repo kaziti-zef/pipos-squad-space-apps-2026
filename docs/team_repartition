@@ -1,0 +1,14 @@
+# 14 — Team Roles and Hackathon Planning
+
+Submission due **Sunday 15 November, 23:59**. Kick-off meeting Saturday 9:00.
+
+## Roles
+| Role | Main tasks | Technologies |
+|------|-----------|--------------|
+| P1 Coordination, UX, pitch | Planning, GitHub repo, global offers, mockups, README, 30 s video, submission, user tests | GitHub, Miro, Figma, screen recorder |
+| P2 Frontend | Map and drawing, forms, 3-strategy page, explanation sheet, dashboard, responsive, PWA | React + Vite, Tailwind, Leaflet, Recharts |
+| P3 Backend & DB | REST API, auth, parcels, history, sharing, NASA cache, deployment | FastAPI, SQLAlchemy, SQLite → PostgreSQL, Shapely, JWT |
+| P4 Data | Extract/prepare POWER, IMERG, SMAP, NDVI; US training table; aggregate on common grid | pandas, xarray, Earthdata Search, Jupyter |
+| P5 Scoring engine | Suitability, weighting, rules, 3 strategies, resilience and confidence, explanation text, model document | numpy, pandas, pytest |
+| P6 Crops, ML, tests | Crop table, calibration and forecasting, evaluation, end-to-end tests | scikit-learn, XGBoost, SHAP, pytest |
+
