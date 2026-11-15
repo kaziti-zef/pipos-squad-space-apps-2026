@@ -305,7 +305,10 @@
     "ctaHistory": "See the history",
     "emptyTitle": "Draw your first field",
     "emptyText": "Draw the outline of your plot on the map. AgriRot then automatically fetches the NASA data for your area.",
-    "emptyCta": "Start drawing"
+    "emptyCta": "Start drawing",
+    "kpiReady": "Plots ready",
+    "kpiChosen": "Rotations chosen",
+    "subtitleFarm": "{farm} · {n} member(s)"
   },
   "parcelNew": {
     "pageTitle": "New plot",
@@ -328,7 +331,9 @@
     "rainySeasons": "Rainy seasons",
     "rainySeasonsValue": "2 / year",
     "ndvi": "Average NDVI",
-    "save": "Save and analyse"
+    "save": "Save and analyse",
+    "defaultName": "My plot",
+    "afterSave": "Calculated when saved"
   },
   "draw": {
     "toolbar": "Drawing tools",
@@ -348,7 +353,7 @@
     "pageTitle": "NASA diagnosis",
     "breadcrumb": "Dashboard",
     "title": "NASA climate diagnosis",
-    "subtitle": "Your area, month by month, compared with the 1981–2024 normal.",
+    "subtitle": "Your area, month by month, compared with the long-term normal.",
     "cta": "Confirm and complete my information →",
     "calendarTitle": "Season calendar · Yaoundé",
     "seasons": [
@@ -440,7 +445,9 @@
       "none": "no month"
     },
     "expand": "Enlarge the {title} chart",
-    "closeFull": "Close full screen"
+    "closeFull": "Close full screen",
+    "unavailable": "This data is not available for your area.",
+    "heatDefinition": "Average temperature of the month compared with the long-term normal of your area."
   },
   "terrain": {
     "pageTitle": "Field data",
@@ -551,7 +558,9 @@
     "planRemove": "Remove {crop} from the plan",
     "planUp": "Move {crop} earlier",
     "planDown": "Move {crop} later",
-    "planNext": "Then"
+    "planNext": "Then",
+    "unknownSeason": "I don't know",
+    "eyebrowParcel": "{name} · step 2 of 3"
   },
   "priorities": {
     "pageTitle": "Priorities and constraints",
@@ -575,7 +584,8 @@
     "excludeHint": "— tap to exclude",
     "tooMany": "Almost all crops are excluded: the rotation rules may not be met.",
     "back": "← Field data",
-    "calculate": "Calculate the strategies"
+    "calculate": "Calculate the strategies",
+    "eyebrowParcel": "{name} · step 3 of 3"
   },
   "strategies": {
     "pageTitle": "Compare strategies",
@@ -625,12 +635,17 @@
       "confidence": "Confidence"
     },
     "seasonsTitle": "Why two seasons, S1 and S2?",
-    "seasonsText": "In Yaoundé it rains twice a year. S1 is the first rainy season (March to June), S2 the second (September to November). In between it is too dry to sow without watering, so AgriRot suggests one crop per rainy season, two per year.",
+    "seasonsText": "In Yaoundé it rains twice a year. S1 is the first rainy season: sowing in March, rain until June. S2 is the second: sowing in August, rain until November. The rest of the year is too dry to sow without watering, so AgriRot suggests one crop per rainy season, two per year.",
     "remindersTitle": "Reminders for this strategy",
     "remindersText": "Get a message before each sowing and each harvest.",
     "remindersOn": "Reminders on",
     "remindersOff": "Turn on reminders",
-    "remindersNext": "Next reminder: sowing {crop}, end of February {year}."
+    "remindersNext": "Next reminder: sowing {crop}, end of February {year}.",
+    "computing": "Calculating strategies…",
+    "computingHint": "AgriRot is combining NASA data for your area with your information. This can take a few seconds.",
+    "recomputing": "Recalculating…",
+    "computedAt": "NASA data · calculated on {date}",
+    "eyebrowParcel": "{name} · {area} ha · 6 seasons (2027–2029)"
   },
   "fiche": {
     "pageTitle": "Explanation sheet",
@@ -673,7 +688,11 @@
     "noteText": "Validated during the field visit. Plan a light ploughing before S1 sowing.",
     "addNote": "Add an observation note",
     "notePlaceholder": "What you observe in the field…",
-    "retain": "Choose this strategy"
+    "retain": "Choose this strategy",
+    "computedAt": "Calculated on {date}",
+    "expiredTitle": "This calculation is no longer available",
+    "expiredText": "Calculations are kept for 24 hours. Run the comparison again to get up-to-date results.",
+    "expiredCta": "Run the calculation again"
   },
   "history": {
     "pageTitle": "History",
@@ -773,5 +792,16 @@
         "when": "3 days ago"
       }
     }
+  },
+  "api": {
+    "network": "Cannot connect. Check your network and try again.",
+    "pending": "Please wait…",
+    "saving": "Saving…",
+    "demoMode": "Demo mode",
+    "logout": "Log out",
+    "conflict": "Someone changed this information in the meantime. Reload the page to see the latest version, then enter your changes again.",
+    "retry": "Try again",
+    "addNote": "Add note",
+    "invitationLink": "Invitation link to share"
   }
 }

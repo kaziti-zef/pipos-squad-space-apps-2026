@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { AlertTriangle, RotateCcw } from "lucide-react";
-import { ButtonLink } from "@/components/ui/Button";
+import { Button, ButtonLink } from "@/components/ui/Button";
 import { ConfidenceBadge, ScoreRing, StabilityGauge } from "@/components/ui/Indicators";
 import { useI18n } from "@/i18n/client";
 import { fmt } from "@/i18n/config";
@@ -10,6 +10,7 @@ import { CROP_BY_ID, SEASON_LABELS } from "@/lib/domain/crops";
 import { effectiveTemp, simulate, type Overrides } from "@/lib/domain/simulate";
 import type { ClimateScenario, StrategiesResponse, StrategyType } from "@/lib/types";
 import { cn, fr } from "@/lib/utils";
+import { useRemoteStrategies } from "./remote";
 import { SeasonRow, TransitionNote } from "./SeasonRow";
 
 const NEUTRAL: ClimateScenario = { rain_delta_pct: 0, temp_delta_c: 0, horizon_years: 0 };
@@ -20,20 +21,32 @@ const TAG_STYLE: Record<StrategyType, string> = {
   alternative: "bg-info-100 text-info-800",
 };
 
+/**
+ * Démo : aperçu local des modifications (simulate). Backend branché : les scores viennent du serveur,
+ * une modification relance le calcul (voir StrategiesLoader) ; on garde seulement les transitions R1/R2.
+ */
 export function useStrategySimulation(data: StrategiesResponse) {
   // Simulateur « Et si… le climat changeait ? » retiré (retour équipe) : climat actuel uniquement.
   const scenario = NEUTRAL;
+  const remote = useRemoteStrategies();
   const [overrides, setOverrides] = useState<Overrides>({});
-  const results = useMemo(() => simulate(data.strategies, scenario, overrides), [data, scenario, overrides]);
+  const results = useMemo(() => {
+    const r = simulate(data.strategies, scenario, remote ? {} : overrides);
+    if (!remote) return r;
+    return r.map((x) => ({
+      ...x,
+      modified: Object.fromEntries(x.base.sequence.flatMap((e, k) => (e.modified_by_user ? [[k, true]] : []))),
+    }));
+  }, [data, scenario, overrides, remote]);
   const best = results.reduce((b, r, i) => (r.score > results[b].score ? i : b), 0);
   const setCrop = (id: StrategyType, season: number, crop: string) =>
-    setOverrides((o) => ({ ...o, [id]: { ...(o[id] ?? {}), [season]: crop } }));
-  const undo = (id: StrategyType) => setOverrides((o) => ({ ...o, [id]: {} }));
-  return { scenario, results, best, setCrop, undo };
+    remote ? remote.setCrop(id, season, crop) : setOverrides((o) => ({ ...o, [id]: { ...(o[id] ?? {}), [season]: crop } }));
+  const undo = (id: StrategyType) => (remote ? remote.undo(id) : setOverrides((o) => ({ ...o, [id]: {} })));
+  return { scenario, results, best, setCrop, undo, remote };
 }
 
 export function StrategiesView({ data, parcelId }: { data: StrategiesResponse; parcelId: string }) {
-  const { scenario, results, best, setCrop, undo } = useStrategySimulation(data);
+  const { scenario, results, best, setCrop, undo, remote } = useStrategySimulation(data);
   const { t, lang, href } = useI18n();
   const st = t.strategies;
   const temp = effectiveTemp(scenario);
@@ -82,11 +95,12 @@ export function StrategiesView({ data, parcelId }: { data: StrategiesResponse; p
                   <div key={k}>
                     <TransitionNote t={r.transitions[k]} />
                     <SeasonRow
-                      label={SEASON_LABELS[k]}
+                      label={s.sequence[k]?.label ?? SEASON_LABELS[k]}
                       cropId={cropId}
+                      cropName={s.sequence[k]?.crop_name}
                       index={k}
                       modified={!!r.modified[k]}
-                      incompatible={temp > CROP_BY_ID[cropId].heatLimit}
+                      incompatible={temp > (CROP_BY_ID[cropId]?.heatLimit ?? 99)}
                       onChange={(c) => setCrop(s.id, k, c)}
                     />
                   </div>
@@ -103,7 +117,7 @@ export function StrategiesView({ data, parcelId }: { data: StrategiesResponse; p
               </div>
 
               <div className="mt-3.5 flex flex-wrap gap-1.5">
-                {st.benefits[s.id].map((b) => (
+                {(remote ? s.explanation.benefits.slice(0, 3) : st.benefits[s.id]).map((b) => (
                   <span key={b} className="rounded-full bg-beige px-2.5 py-[5px] text-[13px] font-semibold text-ink-soft">
                     {b}
                   </span>
@@ -111,16 +125,26 @@ export function StrategiesView({ data, parcelId }: { data: StrategiesResponse; p
               </div>
 
               <div className="mt-[18px] flex flex-wrap gap-2">
-                <ButtonLink href={href(`/parcelles/${parcelId}/strategies/${s.id}`)} variant="secondary" className="flex-1">
-                  {st.details}
-                </ButtonLink>
                 <ButtonLink
-                  href={href(`/parcelles/${parcelId}/historique`)}
-                  variant={isBest ? "primary" : "outline"}
+                  href={href(remote ? remote.detailHref(s.id) : `/parcelles/${parcelId}/strategies/${s.id}`)}
+                  variant="secondary"
                   className="flex-1"
                 >
-                  {st.retain}
+                  {st.details}
                 </ButtonLink>
+                {remote ? (
+                  <Button onClick={() => remote.retain(s.id)} disabled={remote.busy} variant={isBest ? "primary" : "outline"} className="flex-1">
+                    {st.retain}
+                  </Button>
+                ) : (
+                  <ButtonLink
+                    href={href(`/parcelles/${parcelId}/historique`)}
+                    variant={isBest ? "primary" : "outline"}
+                    className="flex-1"
+                  >
+                    {st.retain}
+                  </ButtonLink>
+                )}
               </div>
             </article>
           );

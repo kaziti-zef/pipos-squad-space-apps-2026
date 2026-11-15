@@ -8,18 +8,30 @@ import { CROPS, cropStyle } from "@/lib/domain/crops";
 
 /**
  * Plan souhaité par l'agriculteur (retour équipe du 14/11/2026) : une simple file de cultures,
- * sans saison ni date. Maquette : état local ; à envoyer avec les données terrain lors du branchement de l'API.
+ * sans saison ni date. Envoyée avec les données terrain (local-inputs.planned_rotation, saison = rang dans la file).
  */
-export function FuturePlan({ readOnly }: { readOnly: boolean }) {
+export function FuturePlan({
+  readOnly,
+  initial = [],
+  onChange,
+}: {
+  readOnly: boolean;
+  initial?: string[];
+  onChange?: (crops: string[]) => void;
+}) {
   const { t } = useI18n();
   const tr = t.terrain;
   const name = (id: string) => t.crops[id as keyof typeof t.crops] ?? id;
-  const [queue, setQueue] = useState<{ key: number; crop: string }[]>([
-    { key: 1, crop: "niebe" },
-    { key: 2, crop: "mais" },
-  ]);
+  const [queue, setQueueState] = useState<{ key: number; crop: string }[]>(() => initial.map((crop, i) => ({ key: i + 1, crop })));
   const [next, setNext] = useState(CROPS[0].id);
-  const [seq, setSeq] = useState(3);
+  const [seq, setSeq] = useState(initial.length + 1);
+
+  /** Met à jour la file et prévient le formulaire parent (pas d'effet : appel direct dans l'événement). */
+  const setQueue = (update: (q: { key: number; crop: string }[]) => { key: number; crop: string }[]) => {
+    const nextQueue = update(queue);
+    setQueueState(nextQueue);
+    onChange?.(nextQueue.map((x) => x.crop));
+  };
 
   const move = (i: number, d: number) =>
     setQueue((q) => {

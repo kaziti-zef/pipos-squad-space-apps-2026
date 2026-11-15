@@ -1,12 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { Globe, Info, LocateFixed, Search, TriangleAlert, XCircle } from "lucide-react";
 import { ParcelDrawMap } from "@/components/map";
 import type { DrawnParcel } from "@/components/map/ParcelDrawMap";
-import { ButtonLink } from "@/components/ui/Button";
+import { Button, ButtonLink } from "@/components/ui/Button";
 import { useI18n } from "@/i18n/client";
+import { useApp } from "@/lib/api/app-context";
+import * as endpoints from "@/lib/api/endpoints";
+import { ApiError } from "@/lib/api/errors";
 import { parcels } from "@/lib/mocks";
 import { fr } from "@/lib/utils";
 
@@ -30,10 +34,36 @@ function Toast({ tone, icon, children }: { tone: string; icon: React.ReactNode; 
   );
 }
 
-/** Tracé d'une parcelle (CU4) : carte plein écran + panneau d'informations. */
+/**
+ * Tracé d'une parcelle (CU4) : carte plein écran + panneau d'informations.
+ * Mode API : POST /parcels ; le serveur valide le contour et calcule la surface de référence,
+ * l'altitude et la pente (SRTM). Mode démo : contour d'exemple et valeurs fixes.
+ */
 export function ParcelEditor() {
   const { t, lang, href } = useI18n();
+  const router = useRouter();
+  const { apiEnabled, farm } = useApp();
   const p = t.parcelNew;
+  const [name, setName] = useState(apiEnabled ? "" : "Bas-Fond Nord");
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+
+  const save = async () => {
+    if (!apiEnabled) return router.push(href("/parcelles/pcl_55/diagnostic"));
+    if (!drawn || !farm) return;
+    setSaving(true);
+    setSaveError("");
+    try {
+      const created = await endpoints.parcels.create(farm.id, name.trim() || p.defaultName, {
+        type: "Polygon",
+        coordinates: [drawn.coordinates],
+      });
+      router.push(href(`/parcelles/${created.id}/diagnostic`));
+    } catch (err) {
+      setSaveError(err instanceof ApiError ? err.message : t.api.network);
+      setSaving(false);
+    }
+  };
   const [drawn, setDrawn] = useState<DrawnParcel | null>(null);
   const [error, setError] = useState("");
   const [gpsDenied, setGpsDenied] = useState(false);
@@ -43,7 +73,7 @@ export function ParcelEditor() {
   return (
     <main className="flex flex-1 flex-wrap">
       <div className="relative isolate min-h-[560px] min-w-0 flex-[999_1_480px] md:min-h-dvh">
-        <ParcelDrawMap initial={INITIAL} onChange={setDrawn} onError={setError} locateRequest={locate} onLocateDenied={onDenied} />
+        <ParcelDrawMap initial={apiEnabled ? undefined : INITIAL} onChange={setDrawn} onError={setError} locateRequest={locate} onLocateDenied={onDenied} />
 
         <div className="pointer-events-none absolute inset-x-4 top-4 z-[1000] flex flex-wrap items-start gap-3">
           <label className="pointer-events-auto flex min-h-12 max-w-[420px] flex-[1_1_280px] items-center gap-2.5 rounded-lg bg-white px-3.5 shadow-float">
@@ -61,7 +91,11 @@ export function ParcelEditor() {
         </div>
 
         <div className="absolute bottom-5 left-1/2 z-[1000] flex w-[min(560px,calc(100%-32px))] -translate-x-1/2 flex-col gap-2.5">
-          {error ? (
+          {saveError ? (
+            <Toast tone="bg-danger-100 text-danger-800" icon={<XCircle aria-hidden className="size-[18px] shrink-0" />}>
+              {saveError}
+            </Toast>
+          ) : error ? (
             <Toast tone="bg-danger-100 text-danger-800" icon={<XCircle aria-hidden className="size-[18px] shrink-0" />}>
               <strong>{p.invalid}</strong> {error}
             </Toast>
@@ -83,19 +117,20 @@ export function ParcelEditor() {
             {t.common.backDashboard}
           </Link>
           <h1 className="mb-1 mt-2.5 font-display text-[26px] font-bold tracking-[-0.4px]">{p.pageTitle}</h1>
-          <p className="text-sm text-ink-muted">{t.common.farmName}</p>
+          <p className="text-sm text-ink-muted">{apiEnabled ? (farm?.name ?? "…") : t.common.farmName}</p>
         </div>
         <label className="flex flex-col gap-1.5">
           <span className="text-sm font-semibold">{p.nameLabel}</span>
-          <input className="field-input" defaultValue="Bas-Fond Nord" />
+          <input className="field-input" value={name} onChange={(e) => setName(e.target.value)} placeholder={p.defaultName} maxLength={120} />
         </label>
         <div>
           <p className="mb-1 text-sm font-bold uppercase tracking-[1px] text-forest">{p.auto}</p>
           <Row label={p.area} value={drawn ? `${fr(drawn.areaHa, 2, lang)} ha` : "—"} />
           <Row label={p.center} value={drawn ? `${fr(drawn.centroid.lat, 3, lang)} · ${fr(drawn.centroid.lon, 3, lang)}` : "—"} />
-          <Row label={p.altitude} value="742 m" />
-          <Row label={p.slope} value={p.slopeValue} />
+          <Row label={p.altitude} value={apiEnabled ? p.afterSave : "742 m"} />
+          <Row label={p.slope} value={apiEnabled ? p.afterSave : p.slopeValue} />
         </div>
+        {!apiEnabled && (
         <div className="rounded-xl bg-beige p-4">
           <p className="mb-2.5 flex items-center gap-2 text-sm font-semibold">
             <Globe aria-hidden className="size-[18px] text-info-600" />
@@ -115,13 +150,14 @@ export function ParcelEditor() {
             ))}
           </div>
         </div>
+        )}
         <div className="mt-auto flex gap-2.5">
           <ButtonLink href={href("/tableau-de-bord")} variant="secondary">
             {t.common.cancel}
           </ButtonLink>
-          <ButtonLink href={href("/parcelles/pcl_55/diagnostic")} className="flex-1 whitespace-nowrap" aria-disabled={!drawn}>
-            {p.save}
-          </ButtonLink>
+          <Button onClick={save} disabled={!drawn || saving || (apiEnabled && !farm)} className="flex-1 whitespace-nowrap">
+            {saving ? t.api.pending : p.save}
+          </Button>
         </div>
       </aside>
     </main>

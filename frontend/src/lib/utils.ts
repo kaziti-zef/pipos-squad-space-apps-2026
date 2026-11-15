@@ -5,7 +5,9 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /** Nombre au format de la langue : 84.5 → « 84,5 » (fr) ou « 84.5 » (en). */
-export function fr(value: number, digits = 1, lang: "fr" | "en" = "fr"): string {
+/** Nombre formaté ; « — » quand la valeur manque (l'API peut renvoyer null, guide §8.5). */
+export function fr(value: number | null | undefined, digits = 1, lang: "fr" | "en" = "fr"): string {
+  if (value === null || value === undefined || Number.isNaN(value)) return "—";
   return value.toLocaleString(lang === "en" ? "en-GB" : "fr-FR", {
     minimumFractionDigits: 0,
     maximumFractionDigits: digits,
@@ -13,7 +15,8 @@ export function fr(value: number, digits = 1, lang: "fr" | "en" = "fr"): string 
 }
 
 /** Valeur signée : 5 → « +5 », -3 → « −3 ». */
-export function signed(value: number, digits = 1, lang: "fr" | "en" = "fr"): string {
+export function signed(value: number | null | undefined, digits = 1, lang: "fr" | "en" = "fr"): string {
+  if (value === null || value === undefined || Number.isNaN(value)) return "—";
   if (value > 0) return `+${fr(value, digits, lang)}`;
   if (value < 0) return `−${fr(Math.abs(value), digits, lang)}`;
   return fr(0, digits, lang);

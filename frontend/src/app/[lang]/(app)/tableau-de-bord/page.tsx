@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import { Droplet, Map as MapIcon, Plus } from "lucide-react";
 import { DisclaimerBanner } from "@/components/ui/Banner";
 import { ButtonLink } from "@/components/ui/Button";
@@ -8,8 +9,8 @@ import { PageContainer, PageHeader } from "@/components/layout/PageHeader";
 import { FarmMap } from "@/components/map";
 import { fmt } from "@/i18n/config";
 import { getI18n } from "@/i18n/server";
-import { currentUser } from "@/lib/mocks";
-import { getParcels } from "@/lib/mocks/localized";
+import { PageSkeleton } from "@/components/layout/PageSkeleton";
+import { API_ENABLED, loadParcels, loadSession } from "@/lib/data/server";
 import { cn, fr } from "@/lib/utils";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -30,20 +31,33 @@ function CompletenessChip({ ok, children }: { ok: boolean; children: React.React
   return <Chip className={ok ? "bg-leaf-100 text-forest" : "bg-sand-200 text-ink-muted line-through"}>{children}</Chip>;
 }
 
-export default async function DashboardPage() {
-  const { t, lang, href } = await getI18n();
-  const d = t.dashboard;
-  const parcels = getParcels(lang);
-  const total = parcels.reduce((s, p) => s + p.area_ha, 0);
-  const firstName = currentUser.full_name.split(" ")[0];
-
+export default function DashboardPage() {
   return (
     <main className="flex-1">
       <DisclaimerBanner />
+      {/* Session et parcelles lues sur le serveur (cookies) : contenu dynamique, rendu dans un Suspense. */}
+      <Suspense fallback={<PageSkeleton />}>
+        <Dashboard />
+      </Suspense>
+    </main>
+  );
+}
+
+async function Dashboard() {
+  const { t, lang, href } = await getI18n();
+  const d = t.dashboard;
+  const session = await loadSession(lang);
+  const parcels = await loadParcels(lang, session.farm?.id ?? null);
+  const total = parcels.reduce((s, p) => s + p.area_ha, 0);
+  const firstName = session.user.full_name.split(" ")[0];
+  const ready = parcels.filter((p) => p.data_completeness.local_inputs && p.data_completeness.history).length;
+  const chosen = parcels.filter((p) => p.last_saved_strategy).length;
+
+  return (
       <PageContainer className="gap-6 pt-8">
         <PageHeader
           title={<span className="md:text-[32px]">{fmt(d.hello, { name: firstName })}</span>}
-          subtitle={d.subtitle}
+          subtitle={API_ENABLED && session.farm ? fmt(d.subtitleFarm, { farm: session.farm.name, n: session.farm.members_count }) : d.subtitle}
           actions={
             <ButtonLink href={href("/parcelles/nouvelle")} className="min-h-11">
               <Plus aria-hidden className="size-[18px]" strokeWidth={2.2} /> {d.newParcel}
@@ -70,12 +84,23 @@ export default async function DashboardPage() {
               <Kpi label={d.kpiArea}>
                 {fr(total, 1, lang)} <span className="text-base text-ink-muted">ha</span>
               </Kpi>
-              <Kpi label={d.kpiConfidence}>
-                <span className="text-warn-700">{d.kpiConfidenceValue}</span>
-              </Kpi>
-              <Kpi label={d.kpiAlerts} warn>
-                1 <span className="text-[15px] font-semibold">{d.kpiAlertsValue}</span>
-              </Kpi>
+              {API_ENABLED ? (
+                <>
+                  <Kpi label={d.kpiReady}>
+                    {ready} <span className="text-base text-ink-muted">/ {parcels.length}</span>
+                  </Kpi>
+                  <Kpi label={d.kpiChosen}>{chosen}</Kpi>
+                </>
+              ) : (
+                <>
+                  <Kpi label={d.kpiConfidence}>
+                    <span className="text-warn-700">{d.kpiConfidenceValue}</span>
+                  </Kpi>
+                  <Kpi label={d.kpiAlerts} warn>
+                    1 <span className="text-[15px] font-semibold">{d.kpiAlertsValue}</span>
+                  </Kpi>
+                </>
+              )}
             </div>
 
             <div className="flex flex-wrap gap-5">
@@ -93,6 +118,7 @@ export default async function DashboardPage() {
               </div>
 
               <div className="flex flex-[2_1_340px] flex-col gap-3.5">
+                {!API_ENABLED && (
                 <div className="card flex gap-3 border border-warn-200 bg-warn-50 px-[18px] py-4">
                   <Droplet aria-hidden className="size-[22px] shrink-0 text-warn-600" />
                   <div>
@@ -103,21 +129,24 @@ export default async function DashboardPage() {
                     </Link>
                   </div>
                 </div>
+                )}
 
                 {parcels.map((p) => {
                   const saved = p.last_saved_strategy;
-                  const cta = !p.data_completeness.history
-                    ? { href: `/parcelles/${p.id}/terrain`, label: d.ctaComplete }
-                    : p.id === "pcl_55"
-                      ? { href: `/parcelles/${p.id}/strategies`, label: d.ctaStrategies }
-                      : { href: `/parcelles/${p.id}/historique`, label: d.ctaHistory };
+                  // Saisies incomplètes -> terrain ; rotation déjà choisie -> historique ; sinon -> stratégies.
+                  const cta = !p.data_completeness.local_inputs || !p.data_completeness.history
+                    ? { href: `/parcelles/${p.id}/diagnostic`, label: d.ctaComplete }
+                    : saved
+                      ? { href: `/parcelles/${p.id}/historique`, label: d.ctaHistory }
+                      : { href: `/parcelles/${p.id}/strategies`, label: d.ctaStrategies };
                   return (
                     <div key={p.id} className="card flex flex-col gap-2.5 px-[18px] py-4">
                       <div className="flex items-start justify-between gap-2.5">
                         <div>
                           <p className="font-display text-base font-semibold">{p.name}</p>
                           <p className="mt-0.5 text-sm text-ink-muted">
-                            {fr(p.area_ha, 2, lang)} ha · {p.current_crop} · {p.note}
+                            {fr(p.area_ha, 2, lang)} ha{p.current_crop ? ` · ${p.current_crop}` : ""}
+                            {p.note ? ` · ${p.note}` : ""}
                           </p>
                         </div>
                         {saved ? (
@@ -144,6 +173,5 @@ export default async function DashboardPage() {
           </>
         )}
       </PageContainer>
-    </main>
   );
 }

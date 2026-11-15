@@ -25,6 +25,7 @@ export function TransitionNote({ t: transition }: { t: Transition }) {
 export function SeasonRow({
   label,
   cropId,
+  cropName,
   index,
   modified,
   incompatible,
@@ -34,6 +35,8 @@ export function SeasonRow({
 }: {
   label: string;
   cropId: string;
+  /** Nom renvoyé par l'API, pour une culture absente du dictionnaire. */
+  cropName?: string;
   index: number;
   modified: boolean;
   incompatible: boolean;
@@ -42,7 +45,7 @@ export function SeasonRow({
   compact?: boolean;
 }) {
   const { t } = useI18n();
-  const name = (id: string) => t.crops[id as keyof typeof t.crops] ?? id;
+  const name = (id: string) => t.crops[id as keyof typeof t.crops] ?? (id === cropId && cropName ? cropName : id);
   const style = cropStyle(cropId);
   return (
     <label
@@ -66,6 +69,7 @@ export function SeasonRow({
             onChange={(e) => onChange(e.target.value)}
             className="absolute inset-0 w-full cursor-pointer opacity-0"
           >
+            {!CROPS.some((c) => c.id === cropId) && <option value={cropId}>{name(cropId)}</option>}
             {CROPS.filter((c) => !excluded.includes(c.id)).map((c) => (
               <option key={c.id} value={c.id}>
                 {name(c.id)}

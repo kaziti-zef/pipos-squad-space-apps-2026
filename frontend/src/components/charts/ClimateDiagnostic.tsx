@@ -16,7 +16,7 @@ import { Maximize2, X } from "lucide-react";
 import { InfoTip } from "@/components/ui/InfoTip";
 import { useI18n } from "@/i18n/client";
 import { fmt } from "@/i18n/config";
-import type { ClimateResponse, ClimateAlert } from "@/lib/types";
+import type { ClimateAlert, ClimateResponse } from "@/lib/api/types";
 import { cn, fr, signed } from "@/lib/utils";
 
 /** Couleurs des alertes ; les libellés sont dans le dictionnaire (diagnostic.alerts). */
@@ -176,15 +176,30 @@ function Src({ children }: { children: ReactNode }) {
 
 const MARGIN = { top: 4, right: 0, bottom: 0, left: 0 };
 
-function Bands({ water = false, bare = false, sel }: { water?: boolean; bare?: boolean; sel: number }) {
+type Period = ClimateResponse["vulnerable_periods"][number];
+
+/** Mois (0-11) couverts par une période, y compris à cheval sur l'année (décembre -> février). */
+function spans(p: Period): [number, number][] {
+  const a = p.from_month - 1, b = p.to_month - 1;
+  return a <= b ? [[a, b]] : [[a, 11], [0, b]];
+}
+
+/** Bandes des périodes vulnérables renvoyées par l'API (vulnerable_periods) + mois sélectionné. */
+function Bands({ periods, water = false, bare = false, sel }: { periods: Period[]; water?: boolean; bare?: boolean; sel: number }) {
   return (
     <>
-      {water && <ReferenceArea x1={0} x2={1} fill="rgba(245,158,11,.28)" ifOverflow="extendDomain" />}
-      {water && <ReferenceArea x1={11} x2={11} fill="rgba(245,158,11,.28)" />}
-      {bare && <ReferenceArea x1={6} x2={7} fill="rgba(146,64,14,.18)" />}
+      {periods.flatMap((p, k) => {
+        const fill = p.type === "water_stress" && water ? "rgba(245,158,11,.28)" : p.type === "bare_soil" && bare ? "rgba(146,64,14,.18)" : null;
+        return fill ? spans(p).map(([x1, x2], j) => <ReferenceArea key={`${k}-${j}`} x1={x1} x2={x2} fill={fill} ifOverflow="extendDomain" />) : [];
+      })}
       <ReferenceArea x1={sel} x2={sel} fill="rgba(20,83,45,.12)" />
     </>
   );
+}
+
+/** Indicateur absent pour cette zone (missing_indicators) : message à la place du graphique. */
+function Unavailable({ text }: { text: string }) {
+  return <div className="flex h-full items-center justify-center rounded-md bg-sand-100 px-6 text-center text-sm text-ink-muted">{text}</div>;
 }
 
 export function ClimateDiagnostic({ data }: { data: ClimateResponse }) {
@@ -211,17 +226,24 @@ export function ClimateDiagnostic({ data }: { data: ClimateResponse }) {
   const ms = data.monthly_series;
   const extremes = (key: "rain_mm" | "temp_avg_c" | "ndvi") => {
     const vals = ms.map((x) => x[key]);
-    const max = Math.max(...vals), min = Math.min(...vals);
+    const known = vals.filter((v): v is number => v !== null);
+    if (!known.length) return { max: null, min: null, maxMonth: "—", minMonth: "—" };
+    const max = Math.max(...known), min = Math.min(...known);
     return { max, min, maxMonth: t.months[vals.indexOf(max)], minMonth: t.months[vals.indexOf(min)] };
   };
   const monthsWhere = (pred: (v: number) => boolean) =>
-    ms.map((x, i) => (pred(x.soil_moisture_anomaly) ? t.months[i] : null)).filter(Boolean).join(", ") || d.charts.none;
+    ms
+      .map((x, i) => (x.soil_moisture_anomaly !== null && pred(x.soil_moisture_anomaly) ? t.months[i] : null))
+      .filter(Boolean)
+      .join(", ") || d.charts.none;
+  const missing = new Set(data.missing_indicators);
+  const periods = data.vulnerable_periods;
   const rainX = extremes("rain_mm"), tempX = extremes("temp_avg_c"), ndviX = extremes("ndvi");
   const summaries = {
-    rain: fmt(d.charts.rain, { ...rainX }),
+    rain: fmt(d.charts.rain, { ...rainX, max: fr(rainX.max, 0, lang), min: fr(rainX.min, 0, lang) }),
     temp: fmt(d.charts.temp, { ...tempX, max: fr(tempX.max, 1, lang), min: fr(tempX.min, 1, lang) }),
-    soil: fmt(d.charts.soil, { dry: monthsWhere((v) => v <= -0.2), wet: monthsWhere((v) => v >= 0.2) }),
-    ndvi: fmt(d.charts.ndvi, { ...ndviX, max: fr(ndviX.max, 2, lang), min: fr(ndviX.min, 2, lang) }),
+    soil: missing.has("soil_moisture_anomaly") ? d.unavailable : fmt(d.charts.soil, { dry: monthsWhere((v) => v <= -0.2), wet: monthsWhere((v) => v >= 0.2) }),
+    ndvi: missing.has("ndvi") ? d.unavailable : fmt(d.charts.ndvi, { ...ndviX, max: fr(ndviX.max, 2, lang), min: fr(ndviX.min, 2, lang) }),
   };
 
   return (
@@ -231,7 +253,7 @@ export function ClimateDiagnostic({ data }: { data: ClimateResponse }) {
           title={d.rain.title}
           unit={d.rain.unit}
           term={d.rain.term}
-          definition={data.glossary.water_balance}
+          definition={data.glossary.water_balance ?? d.unavailable}
           legend={[[d.rain.zone, sw("var(--color-chart-rain)")], [d.rain.normal, sw("var(--color-chart-normal)", 2)]]}
           footer={<Src>{d.rain.source}</Src>}
           summary={summaries.rain}
@@ -241,8 +263,8 @@ export function ClimateDiagnostic({ data }: { data: ClimateResponse }) {
           <ResponsiveContainer>
             <ComposedChart data={series} margin={MARGIN} barCategoryGap="22%">
               {xAxis}
-              <YAxis hide domain={[0, 300]} />
-              <Bands water bare sel={sel} />
+              <YAxis hide domain={[0, "auto"]} />
+              <Bands periods={periods} water bare sel={sel} />
               <Bar dataKey="rain_mm" fill="var(--color-chart-rain)" isAnimationActive={false} />
               <Line dataKey="rain_normal_mm" stroke="var(--color-chart-normal)" strokeWidth={2} dot={false} isAnimationActive={false} />
             </ComposedChart>
@@ -253,7 +275,7 @@ export function ClimateDiagnostic({ data }: { data: ClimateResponse }) {
           title={d.temp.title}
           unit={d.temp.unit}
           term={d.temp.term}
-          definition={data.glossary.heat}
+          definition={data.glossary.heat ?? d.heatDefinition}
           legend={[[d.temp.zone, sw("var(--color-chart-temp)", 3)], [d.temp.normal, sw("var(--color-chart-gray)", 2)]]}
           footer={<Src>{d.temp.source}</Src>}
           summary={summaries.temp}
@@ -263,8 +285,8 @@ export function ClimateDiagnostic({ data }: { data: ClimateResponse }) {
           <ResponsiveContainer>
             <ComposedChart data={series} margin={MARGIN}>
               {xAxis}
-              <YAxis hide domain={[22, 27]} />
-              <Bands sel={sel} />
+              <YAxis hide domain={["dataMin - 1", "dataMax + 1"]} />
+              <Bands periods={periods} sel={sel} />
               <Line dataKey="temp_normal_c" stroke="var(--color-chart-gray)" strokeWidth={2} strokeDasharray="6 5" dot={false} isAnimationActive={false} />
               <Line dataKey="temp_avg_c" stroke="var(--color-chart-temp)" strokeWidth={3} dot={{ r: 4.5, fill: "var(--color-chart-temp)", strokeWidth: 0 }} isAnimationActive={false} />
             </ComposedChart>
@@ -275,7 +297,7 @@ export function ClimateDiagnostic({ data }: { data: ClimateResponse }) {
           title={d.soil.title}
           unit={d.soil.unit}
           term={d.soil.term}
-          definition={data.glossary.soil_moisture_anomaly}
+          definition={data.glossary.soil_moisture_anomaly ?? d.unavailable}
           legend={[[d.soil.wet, sw("var(--color-chart-wet)")], [d.soil.dry, sw("var(--color-chart-dry)")]]}
           footer={
             <>
@@ -286,26 +308,30 @@ export function ClimateDiagnostic({ data }: { data: ClimateResponse }) {
           selected={sel}
           onSelect={setSel}
         >
+          {missing.has("soil_moisture_anomaly") ? (
+            <Unavailable text={d.unavailable} />
+          ) : (
           <ResponsiveContainer>
             <ComposedChart data={series} margin={MARGIN} barCategoryGap="22%">
               {xAxis}
               <YAxis hide domain={[-0.6, 0.6]} />
-              <Bands water sel={sel} />
+              <Bands periods={periods} water sel={sel} />
               <ReferenceLine y={0} stroke="var(--color-chart-gray)" />
               <Bar dataKey="soil_moisture_anomaly" isAnimationActive={false}>
                 {series.map((s) => (
-                  <Cell key={s.i} fill={s.soil_moisture_anomaly >= 0 ? "var(--color-chart-wet)" : "var(--color-chart-dry)"} />
+                  <Cell key={s.i} fill={(s.soil_moisture_anomaly ?? 0) >= 0 ? "var(--color-chart-wet)" : "var(--color-chart-dry)"} />
                 ))}
               </Bar>
             </ComposedChart>
           </ResponsiveContainer>
+          )}
         </ChartCard>
 
         <ChartCard
           title={d.ndvi.title}
           unit={d.ndvi.unit}
           term={d.ndvi.term}
-          definition={data.glossary.ndvi}
+          definition={data.glossary.ndvi ?? d.unavailable}
           legend={[
             [d.ndvi.zone, sw("var(--color-forest-700)", 3)],
             [d.ndvi.estimated, <span key="e" className="inline-block size-2.5 rounded-full border-[1.5px] border-dashed border-forest-700 bg-white" />],
@@ -315,11 +341,14 @@ export function ClimateDiagnostic({ data }: { data: ClimateResponse }) {
           selected={sel}
           onSelect={setSel}
         >
+          {missing.has("ndvi") ? (
+            <Unavailable text={d.unavailable} />
+          ) : (
           <ResponsiveContainer>
             <ComposedChart data={series} margin={MARGIN}>
               {xAxis}
               <YAxis hide domain={[0, 1]} />
-              <Bands bare sel={sel} />
+              <Bands periods={periods} bare sel={sel} />
               <ReferenceLine y={0.2} stroke="var(--color-chart-dry)" strokeDasharray="4 4" />
               <ReferenceLine y={0.6} stroke="var(--color-forest-700)" strokeDasharray="4 4" />
               <Line
@@ -338,6 +367,7 @@ export function ClimateDiagnostic({ data }: { data: ClimateResponse }) {
               />
             </ComposedChart>
           </ResponsiveContainer>
+          )}
         </ChartCard>
       </div>
 
@@ -351,8 +381,8 @@ export function ClimateDiagnostic({ data }: { data: ClimateResponse }) {
           <div className="min-w-0 flex-1">
             <p className="font-display text-[15px] font-semibold">{fmt(d.monthYear, { month: t.months[sel] })}</p>
             <p className="truncate text-sm text-mist-soft">
-              {m.rain_mm} mm · {fr(m.temp_avg_c, 1, lang)} °C
-              {m.alerts[0] && ` · ${d.alerts[m.alerts[0]]}`}
+              {fr(m.rain_mm, 0, lang)} mm · {fr(m.temp_avg_c, 1, lang)} °C
+              {m.alerts[0] && d.alerts[m.alerts[0]] && ` · ${d.alerts[m.alerts[0]]}`}
             </p>
           </div>
           <button
@@ -370,7 +400,7 @@ export function ClimateDiagnostic({ data }: { data: ClimateResponse }) {
         <h2 className="mb-2 font-display text-2xl font-bold">{fmt(d.monthYear, { month: t.months[sel] })}</h2>
         <div className="mb-1.5 flex flex-wrap gap-1.5">
           {m.alerts.length ? (
-            m.alerts.map((a) => (
+            m.alerts.filter((a) => d.alerts[a]).map((a) => (
               <span key={a} className={cn("rounded-full px-2.5 py-1 text-[13px] font-semibold", ALERT_TONE[a])}>
                 {d.alerts[a]}
               </span>
@@ -381,12 +411,12 @@ export function ClimateDiagnostic({ data }: { data: ClimateResponse }) {
         </div>
         {[
           [d.rows.temp, `${fr(m.temp_avg_c, 1, lang)} °C ${fmt(d.normal, { v: fr(m.temp_normal_c, 1, lang) })}`],
-          [d.rows.rain, `${m.rain_mm} mm ${fmt(d.normal, { v: m.rain_normal_mm })}`],
-          [d.rows.etp, `${m.evapotranspiration_mm} mm`],
+          [d.rows.rain, `${fr(m.rain_mm, 0, lang)} mm ${fmt(d.normal, { v: fr(m.rain_normal_mm, 0, lang) })}`],
+          [d.rows.etp, `${fr(m.evapotranspiration_mm, 0, lang)} mm`],
           [d.rows.wb, `${signed(m.water_balance_mm, 0, lang)} mm`],
           [d.rows.soil, signed(m.soil_moisture_anomaly, 2, lang)],
           [d.rows.ndvi, fr(m.ndvi, 2, lang)],
-          [d.rows.frost, d.frostNone],
+          [d.rows.frost, m.frost_risk > 0 ? fr(m.frost_risk, 2, lang) : d.frostNone],
           [d.rows.quality, d.quality[m.quality]],
         ].map(([k, v], i, arr) => (
           <div key={k} className={cn("flex justify-between gap-3 py-[9px] text-sm", i < arr.length - 1 && "border-b border-line-soft")}>

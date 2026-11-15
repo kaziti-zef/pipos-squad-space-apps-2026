@@ -305,7 +305,10 @@
     "ctaHistory": "Voir l'historique",
     "emptyTitle": "Tracez votre premier champ",
     "emptyText": "Dessinez le contour de votre parcelle sur la carte. AgriRot récupère ensuite automatiquement les données NASA de votre zone.",
-    "emptyCta": "Commencer le tracé"
+    "emptyCta": "Commencer le tracé",
+    "kpiReady": "Parcelles prêtes",
+    "kpiChosen": "Rotations choisies",
+    "subtitleFarm": "{farm} · {n} membre(s)"
   },
   "parcelNew": {
     "pageTitle": "Nouvelle parcelle",
@@ -328,7 +331,9 @@
     "rainySeasons": "Saisons de pluie",
     "rainySeasonsValue": "2 / an",
     "ndvi": "NDVI moyen",
-    "save": "Enregistrer et analyser"
+    "save": "Enregistrer et analyser",
+    "defaultName": "Ma parcelle",
+    "afterSave": "Calculé à l'enregistrement"
   },
   "draw": {
     "toolbar": "Outils de dessin",
@@ -348,7 +353,7 @@
     "pageTitle": "Diagnostic NASA",
     "breadcrumb": "Tableau de bord",
     "title": "Diagnostic climatique NASA",
-    "subtitle": "Votre zone, mois par mois, comparée à la normale 1981–2024.",
+    "subtitle": "Votre zone, mois par mois, comparée à la normale de long terme.",
     "cta": "Confirmer et compléter mes informations →",
     "calendarTitle": "Calendrier des saisons · Yaoundé",
     "seasons": [
@@ -440,7 +445,9 @@
       "none": "aucun mois"
     },
     "expand": "Agrandir le graphique {title}",
-    "closeFull": "Fermer le plein écran"
+    "closeFull": "Fermer le plein écran",
+    "unavailable": "Cette donnée n'est pas disponible pour votre zone.",
+    "heatDefinition": "Température moyenne du mois comparée à la normale de long terme de votre zone."
   },
   "terrain": {
     "pageTitle": "Données terrain",
@@ -551,7 +558,9 @@
     "planRemove": "Retirer {crop} du plan",
     "planUp": "Avancer {crop}",
     "planDown": "Reculer {crop}",
-    "planNext": "Ensuite"
+    "planNext": "Ensuite",
+    "unknownSeason": "Je ne sais pas",
+    "eyebrowParcel": "{name} · étape 2 sur 3"
   },
   "priorities": {
     "pageTitle": "Priorités et contraintes",
@@ -575,7 +584,8 @@
     "excludeHint": "— touchez pour exclure",
     "tooMany": "Presque toutes les cultures sont exclues : les règles de rotation risquent d'être compromises.",
     "back": "← Données terrain",
-    "calculate": "Calculer les stratégies"
+    "calculate": "Calculer les stratégies",
+    "eyebrowParcel": "{name} · étape 3 sur 3"
   },
   "strategies": {
     "pageTitle": "Comparer les stratégies",
@@ -625,12 +635,17 @@
       "confidence": "Confiance"
     },
     "seasonsTitle": "Pourquoi deux saisons, S1 et S2 ?",
-    "seasonsText": "À Yaoundé, il pleut deux fois par an. S1 est la première saison des pluies (mars à juin), S2 la deuxième (septembre à novembre). Entre les deux, il fait trop sec pour semer sans arrosage : AgriRot propose donc une culture par saison des pluies, soit deux par an.",
+    "seasonsText": "À Yaoundé, il pleut deux fois par an. S1 est la première saison des pluies : on sème en mars, les pluies durent jusqu'en juin. S2 est la deuxième : on sème en août, les pluies durent jusqu'en novembre. En dehors, il fait trop sec pour semer sans arrosage : AgriRot propose donc une culture par saison des pluies, soit deux par an.",
     "remindersTitle": "Rappels pour cette stratégie",
     "remindersText": "Recevez un message avant chaque semis et chaque récolte.",
     "remindersOn": "Rappels activés",
     "remindersOff": "Activer les rappels",
-    "remindersNext": "Prochain rappel : semis du {crop}, fin février {year}."
+    "remindersNext": "Prochain rappel : semis du {crop}, fin février {year}.",
+    "computing": "Calcul des stratégies en cours…",
+    "computingHint": "AgriRot croise les données NASA de votre zone avec vos informations. Cela peut prendre quelques secondes.",
+    "recomputing": "Nouveau calcul en cours…",
+    "computedAt": "Données NASA · calcul du {date}",
+    "eyebrowParcel": "{name} · {area} ha · 6 saisons (2027–2029)"
   },
   "fiche": {
     "pageTitle": "Fiche d'explication",
@@ -673,7 +688,11 @@
     "noteText": "Validé lors de la visite terrain. Prévoir un labour léger avant le semis de S1.",
     "addNote": "Ajouter une note d'observation",
     "notePlaceholder": "Ce que vous observez sur le terrain…",
-    "retain": "Retenir cette stratégie"
+    "retain": "Retenir cette stratégie",
+    "computedAt": "Calculée le {date}",
+    "expiredTitle": "Ce calcul n'est plus disponible",
+    "expiredText": "Les calculs sont conservés 24 heures. Relancez la comparaison pour obtenir des résultats à jour.",
+    "expiredCta": "Relancer le calcul"
   },
   "history": {
     "pageTitle": "Historique",
@@ -773,5 +792,16 @@
         "when": "Il y a 3 jours"
       }
     }
+  },
+  "api": {
+    "network": "Connexion impossible. Vérifiez votre réseau puis réessayez.",
+    "pending": "Patientez…",
+    "saving": "Enregistrement…",
+    "demoMode": "Mode démonstration",
+    "logout": "Se déconnecter",
+    "conflict": "Quelqu'un a modifié ces informations entre-temps. Rechargez la page pour voir la dernière version, puis refaites votre saisie.",
+    "retry": "Réessayer",
+    "addNote": "Ajouter la note",
+    "invitationLink": "Lien d'invitation à transmettre"
   }
 }

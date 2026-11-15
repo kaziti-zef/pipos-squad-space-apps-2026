@@ -49,3 +49,4 @@ docs/AUDIT_APPLICATION.md
 docs/PLAN_ACTION.md
 .vscode/
 README.local.md
+!.env.example

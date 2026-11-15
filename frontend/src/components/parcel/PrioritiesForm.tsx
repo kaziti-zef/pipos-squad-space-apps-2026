@@ -1,10 +1,16 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ArrowRight, ChevronDown, ChevronUp, CircleDollarSign, Droplet, Leaf, Mountain, Shovel, Wheat, TriangleAlert } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { ButtonLink } from "@/components/ui/Button";
+import { Button, ButtonLink } from "@/components/ui/Button";
 import { useI18n } from "@/i18n/client";
+import { prioritesVersPreferences } from "@/lib/api/adapters";
+import { useApp } from "@/lib/api/app-context";
+import * as endpoints from "@/lib/api/endpoints";
+import { ApiError, reaction } from "@/lib/api/errors";
+import type { Preferences } from "@/lib/api/types";
 import { fmt } from "@/i18n/config";
 import { CROPS } from "@/lib/domain/crops";
 import type { PriorityKey } from "@/lib/types";
@@ -29,11 +35,42 @@ const tog = "inline-flex min-h-11 items-center gap-1.5 rounded-full border-[1.5p
  * sont calculés sans être affichés, puis envoyés via PUT /preferences.
  * Équipement, main-d'œuvre et débouché local retirés (retours équipe du 14/11/2026).
  */
-export function PrioritiesForm({ parcelId }: { parcelId: string }) {
+/** Ordre lu depuis les poids enregistrés (du plus lourd au plus léger), ou ordre de démonstration. */
+function initialOrder(prefs: Preferences | null): PriorityKey[] {
+  if (!prefs || prefs.source === "default") return ["water_saving", "income", "soil_health", "nitrogen", "erosion_control", "fodder"];
+  return (Object.keys(prefs.weights) as PriorityKey[]).sort((a, b) => prefs.weights[b] - prefs.weights[a]);
+}
+
+export function PrioritiesForm({ parcelId, initial = null }: { parcelId: string; initial?: Preferences | null }) {
   const { t, href } = useI18n();
+  const router = useRouter();
+  const { apiEnabled, role } = useApp();
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [version, setVersion] = useState(initial?.version ?? 0);
   const pr = t.priorities;
-  const [order, setOrder] = useState<PriorityKey[]>(["water_saving", "income", "soil_health", "nitrogen", "erosion_control", "fodder"]);
-  const [excluded, setExcluded] = useState<Record<string, boolean>>({ gombo: true });
+  const [order, setOrder] = useState<PriorityKey[]>(() => initialOrder(initial));
+  const [excluded, setExcluded] = useState<Record<string, boolean>>(() =>
+    apiEnabled ? Object.fromEntries((initial?.constraints.excluded_crops ?? []).map((c) => [c, true])) : { gombo: true },
+  );
+
+  /** PUT /preferences (classement + cultures exclues ; le serveur calcule les poids), puis calcul des stratégies. */
+  const save = async () => {
+    const target = href(`/parcelles/${parcelId}/strategies`);
+    if (!apiEnabled || role === "advisor") return router.push(target);
+    setSaving(true);
+    setError("");
+    try {
+      const exclusions = Object.keys(excluded).filter((k) => excluded[k]);
+      const saved = await endpoints.inputs.putPreferences(parcelId, prioritesVersPreferences(order, exclusions), version);
+      setVersion(saved.version);
+      router.push(target);
+    } catch (err) {
+      if (err instanceof ApiError && reaction(err) === "reload_conflict") setError(t.api.conflict);
+      else setError(err instanceof ApiError ? err.message : t.api.network);
+      setSaving(false);
+    }
+  };
 
   const n = order.length;
   const move = (i: number, d: number) =>
@@ -125,10 +162,15 @@ export function PrioritiesForm({ parcelId }: { parcelId: string }) {
         <ButtonLink href={href(`/parcelles/${parcelId}/terrain`)} variant="secondary">
           {pr.back}
         </ButtonLink>
-        <ButtonLink href={href(`/parcelles/${parcelId}/strategies`)} variant="cta" className="min-h-[52px] text-base">
-          {pr.calculate} <ArrowRight aria-hidden className="size-[18px]" strokeWidth={2.2} />
-        </ButtonLink>
+        <Button onClick={save} disabled={saving} variant="cta" className="min-h-[52px] text-base">
+          {saving ? t.api.saving : pr.calculate} <ArrowRight aria-hidden className="size-[18px]" strokeWidth={2.2} />
+        </Button>
       </div>
+      {error && (
+        <p role="alert" className="rounded-md bg-danger-100 px-3.5 py-3 text-sm text-danger-800">
+          {error}
+        </p>
+      )}
     </>
   );
 }

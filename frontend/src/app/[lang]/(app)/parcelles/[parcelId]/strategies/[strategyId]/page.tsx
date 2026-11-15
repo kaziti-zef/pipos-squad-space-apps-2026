@@ -9,10 +9,14 @@ import { PageContainer } from "@/components/layout/PageHeader";
 import { PageSkeleton } from "@/components/layout/PageSkeleton";
 import { PrintButton } from "@/components/strategy/PrintButton";
 import { Reminders } from "@/components/strategy/Reminders";
+import { RetainButton } from "@/components/strategy/RetainButton";
+import { fmt } from "@/i18n/config";
 import { getI18n } from "@/i18n/server";
+import { API_ENABLED, loadComputation } from "@/lib/data/server";
 import { cropStyle } from "@/lib/domain/crops";
 import { strategies } from "@/lib/mocks";
 import { getStrategies } from "@/lib/mocks/localized";
+import type { Strategy } from "@/lib/types";
 import { cn, fr } from "@/lib/utils";
 
 type Props = PageProps<"/[lang]/parcelles/[parcelId]/strategies/[strategyId]">;
@@ -106,9 +110,30 @@ export default function StrategyDetailPage({ params, searchParams }: Props) {
 async function StrategySheet({ params, searchParams }: Pick<Props, "params" | "searchParams">) {
   const [{ parcelId, strategyId }, query, { t, lang, href }] = await Promise.all([params, searchParams, getI18n()]);
   const f = t.fiche;
-  const lowConfidence = query.confiance === "faible";
-  const s = getStrategies(lang).strategies.find((x) => x.id === strategyId);
+  // Backend : le calcul affiché est relu par son identifiant (?c=…, conservé 24 h). Démo : jeu fixe.
+  const computationId = typeof query.c === "string" ? query.c : null;
+  let s: Strategy | undefined;
+  let computedAt: string | null = null;
+  if (API_ENABLED) {
+    const computation = computationId ? await loadComputation(parcelId, computationId, lang) : null;
+    if (!computation) {
+      return (
+        <PageContainer width="narrow" className="gap-[18px]">
+          <div className="card flex flex-col items-center gap-3 px-6 py-12 text-center">
+            <h1 className="font-display text-2xl font-bold">{f.expiredTitle}</h1>
+            <p className="max-w-[440px] text-ink-muted">{f.expiredText}</p>
+            <ButtonLink href={href(`/parcelles/${parcelId}/strategies`)}>{f.expiredCta}</ButtonLink>
+          </div>
+        </PageContainer>
+      );
+    }
+    s = computation.strategies.find((x) => x.id === strategyId) as unknown as Strategy | undefined;
+    computedAt = new Date(computation.computed_at).toLocaleString(lang === "en" ? "en-GB" : "fr-FR", { dateStyle: "long", timeStyle: "short" });
+  } else {
+    s = getStrategies(lang).strategies.find((x) => x.id === strategyId);
+  }
   if (!s) notFound();
+  const lowConfidence = API_ENABLED ? s.confidence.level === "faible" : query.confiance === "faible";
 
   const conf = lowConfidence
     ? { label: f.levelLow, cls: "bg-warn-100 text-warn-800" }
@@ -116,7 +141,7 @@ async function StrategySheet({ params, searchParams }: Pick<Props, "params" | "s
       ? { label: f.levelHigh, cls: "bg-leaf-100 text-forest" }
       : { label: f.levelMid, cls: "bg-warn-100 text-warn-800" };
 
-  const gaps = lowConfidence ? f.lowGaps : s.explanation.information_gaps;
+  const gaps = lowConfidence && !API_ENABLED ? f.lowGaps : s.explanation.information_gaps;
 
   const gapsSection = (
     <Section
@@ -157,7 +182,7 @@ async function StrategySheet({ params, searchParams }: Pick<Props, "params" | "s
           <div>
             <span className={cn("inline-block rounded-full px-2.5 py-1 text-[13px] font-bold", TAG_STYLE[s.id])}>{t.strategies.tags[s.id]}</span>
             <h1 className="mb-1 mt-2.5 font-display text-[28px] font-bold tracking-[-0.5px]">{s.name}</h1>
-            <p className="text-ink-muted">{f.computedOn}</p>
+            <p className="text-ink-muted">{computedAt ? fmt(f.computedAt, { date: computedAt }) : f.computedOn}</p>
           </div>
           <div className="flex flex-wrap gap-3">
             <div className="min-w-24 rounded-lg bg-leaf-100 px-4 py-3 text-forest">
@@ -178,7 +203,7 @@ async function StrategySheet({ params, searchParams }: Pick<Props, "params" | "s
           {s.sequence.map((e) => (
             <div key={e.season} className="flex-[1_1_90px] rounded-sm px-2 py-2.5 text-center" style={{ background: cropStyle(e.crop_id).bg }}>
               <small className="block text-[13px] font-semibold text-ink-muted">{e.label}</small>
-              <b className="text-sm">{t.crops[e.crop_id as keyof typeof t.crops]}</b>
+              <b className="text-sm">{t.crops[e.crop_id as keyof typeof t.crops] ?? e.crop_name}</b>
             </div>
           ))}
         </div>
@@ -236,6 +261,8 @@ async function StrategySheet({ params, searchParams }: Pick<Props, "params" | "s
         <p className="mt-1 text-sm text-ink-muted">{f.riskFooter}</p>
       </Section>
 
+      {/* Notes de démonstration ; avec le backend, les notes se rattachent à une stratégie sauvegardée (historique). */}
+      {!API_ENABLED && (
       <section className="card flex flex-col gap-3 p-[22px]">
         <h2 className="font-display text-[17px] font-semibold">{f.notes}</h2>
         <div className="flex gap-3 rounded-lg bg-leaf-50 p-3.5">
@@ -253,12 +280,17 @@ async function StrategySheet({ params, searchParams }: Pick<Props, "params" | "s
           <textarea rows={2} placeholder={f.notePlaceholder} className="field-input resize-y py-3" />
         </label>
       </section>
+      )}
 
-      <Reminders crop={t.crops[s.sequence[0].crop_id as keyof typeof t.crops] ?? s.sequence[0].crop_name} year={s.sequence[0].label.slice(0, 4)} />
+      {!API_ENABLED && <Reminders crop={t.crops[s.sequence[0].crop_id as keyof typeof t.crops] ?? s.sequence[0].crop_name} year={s.sequence[0].label.slice(0, 4)} />}
 
       <div className="no-print flex flex-wrap justify-end gap-2.5">
         <PrintButton />
-        <ButtonLink href={href(`/parcelles/${parcelId}/historique`)}>{f.retain}</ButtonLink>
+        {API_ENABLED && computationId ? (
+          <RetainButton parcelId={parcelId} computationId={computationId} strategyId={s.id} label={f.retain} />
+        ) : (
+          <ButtonLink href={href(`/parcelles/${parcelId}/historique`)}>{f.retain}</ButtonLink>
+        )}
       </div>
     </PageContainer>
   );
