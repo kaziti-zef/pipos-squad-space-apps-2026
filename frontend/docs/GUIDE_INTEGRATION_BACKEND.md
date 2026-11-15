@@ -1,12 +1,17 @@
 # Guide d'intégration frontend / backend — AgriRot
 
+> **Mise à jour du 15 novembre 2026 : le branchement est fait.** Les écrans appellent l'API via le BFF
+> `src/app/api/v1/[...path]` et `src/lib/data/server.ts` ; sans `AGROROT_API_URL`, le site reste en mode démo.
+> État, variables et déploiement : [DEPLOIEMENT.md](./DEPLOIEMENT.md). Les sections ci-dessous décrivent
+> l'état d'avant le branchement et restent utiles comme référence du contrat.
+
 Guide destiné aux développeurs backend qui branchent le frontend Next.js sur l'API FastAPI.
 Il décrit l'état observé du frontend au 15 novembre 2026 et le contrat REST v2.0 daté du
 14 novembre 2026. Le contrat reste la référence des routes et des payloads ; les fixtures
 frontend servent uniquement à la démonstration.
 
-Références : [contrat REST v2.0](../../AgroRot_Contrat_API_v2.pdf),
-[plan d'action frontend](./PLAN_ACTION.md), [types partagés](../src/lib/types.ts),
+Références : [contrat REST v2.0](./api_contract.md),
+[branchement et déploiement](./DEPLOIEMENT.md), [types partagés](../src/lib/types.ts),
 [données de démonstration](../src/lib/mocks/index.ts).
 
 ## 1. État de l'intégration : à ne pas confondre avec la démo

@@ -5,8 +5,9 @@ import { Banner, DisclaimerBanner } from "@/components/ui/Banner";
 import { ButtonLink } from "@/components/ui/Button";
 import { PageContainer, PageHeader } from "@/components/layout/PageHeader";
 import { ClimateDiagnostic } from "@/components/charts/ClimateDiagnostic";
+import { fmt } from "@/i18n/config";
 import { getI18n } from "@/i18n/server";
-import { getClimate } from "@/lib/mocks/localized";
+import { API_ENABLED, loadClimate, loadParcel } from "@/lib/data/server";
 import type { DataSourceStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -15,43 +16,68 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t.diagnostic.pageTitle };
 }
 
-/** Bandeau du plan B (contrat §3.6). `?source=fallback_cache|fallback_local` pour la démo. */
-async function SourceBanner({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  const { t } = await getI18n();
+/** Bandeau du plan B (contrat §3.6) : statut renvoyé par l'API, ou `?source=…` en démo. */
+async function SourceBanner({ status, cachedAt }: { status: DataSourceStatus; cachedAt: string | null }) {
+  const { t, lang } = await getI18n();
   const d = t.diagnostic;
-  const status = ((await searchParams).source as DataSourceStatus | undefined) ?? "live";
   if (status === "fallback_cache")
     return (
-      <Banner tone="info">
-        <strong>{d.cacheStrong}</strong> {d.cacheText}
+      <Banner tone="info" rounded>
+        <strong>{fmt(d.cacheStrong, { date: cachedAt ? new Date(cachedAt).toLocaleDateString(lang === "en" ? "en-GB" : "fr-FR") : "—" })}</strong> {d.cacheText}
       </Banner>
     );
   if (status === "fallback_local")
     return (
-      <Banner tone="warn">
+      <Banner tone="warn" rounded>
         <strong>{d.localStrong}</strong> {d.localText}
       </Banner>
     );
   return null;
 }
 
+/**
+ * Calendrier de Yaoundé, aligné sur le backend (agrorot-core/data/calendrier_cm_yaounde.yaml) :
+ * S1 semis en mars, pluies jusqu'en juin ; petite saison sèche en juillet ;
+ * S2 semis en août, pluies jusqu'en novembre ; grande saison sèche de décembre à février.
+ */
 const SEASON_SPANS = [
-  { span: 2, dry: true },
-  { span: 4, dry: false },
-  { span: 2, dry: true },
-  { span: 3, dry: false },
-  { span: 1, dry: true },
+  { span: 2, dry: true }, // janvier – février : fin de la grande saison sèche
+  { span: 4, dry: false }, // mars – juin : pluies 1, semis S1
+  { span: 1, dry: true }, // juillet : petite saison sèche
+  { span: 4, dry: false }, // août – novembre : pluies 2, semis S2
+  { span: 1, dry: true }, // décembre : début de la grande saison sèche
 ];
 
-export default async function DiagnosticPage({ params, searchParams }: PageProps<"/[lang]/parcelles/[parcelId]/diagnostic">) {
-  const { t, lang, href } = await getI18n();
+type Props = PageProps<"/[lang]/parcelles/[parcelId]/diagnostic">;
+
+/** Nom de la parcelle (fil d'Ariane). */
+async function ParcelName({ params }: Pick<Props, "params">) {
+  const { t, lang } = await getI18n();
+  if (!API_ENABLED) return <>{t.common.plotName}</>;
+  const { parcelId } = await params;
+  return <>{(await loadParcel(parcelId, lang)).name}</>;
+}
+
+/** Bandeau de source + graphiques : GET /parcels/{id}/climate (ou données de démonstration). */
+async function ClimateSection({ params, searchParams }: Pick<Props, "params" | "searchParams">) {
+  const { lang } = await getI18n();
+  const [{ parcelId }, query] = await Promise.all([params, searchParams]);
+  const data = await loadClimate(parcelId, lang);
+  const status = API_ENABLED ? data.data_source_status : ((query.source as DataSourceStatus | undefined) ?? "live");
+  return (
+    <>
+      <SourceBanner status={status} cachedAt={API_ENABLED ? data.cached_at : "2026-11-12T08:00:00Z"} />
+      <ClimateDiagnostic data={data} />
+    </>
+  );
+}
+
+export default async function DiagnosticPage({ params, searchParams }: Props) {
+  const { t, href } = await getI18n();
   const d = t.diagnostic;
   return (
     <main className="flex-1">
       <DisclaimerBanner />
-      <Suspense fallback={null}>
-        <SourceBanner searchParams={searchParams} />
-      </Suspense>
       <PageContainer>
         <PageHeader
           eyebrow={
@@ -59,7 +85,10 @@ export default async function DiagnosticPage({ params, searchParams }: PageProps
               <Link href={href("/tableau-de-bord")} className="inline-flex min-h-11 items-center no-underline">
                 {d.breadcrumb}
               </Link>{" "}
-              / {t.common.plotName}
+              /{" "}
+              <Suspense fallback="…">
+                <ParcelName params={params} />
+              </Suspense>
             </>
           }
           title={d.title}
@@ -102,7 +131,7 @@ export default async function DiagnosticPage({ params, searchParams }: PageProps
               <div
                 key={i}
                 style={{ gridColumn: `span ${s.span}` }}
-                className={cn("rounded-xs px-0.5 py-2", s.dry ? "bg-dry-season text-dry-season-ink" : "bg-rain-season text-forest")}
+                className={cn("flex items-center justify-center rounded-xs px-0.5 py-2", s.dry ? "bg-dry-season text-dry-season-ink" : "bg-rain-season text-forest")}
               >
                 {d.seasons[i]}
               </div>
@@ -122,7 +151,9 @@ export default async function DiagnosticPage({ params, searchParams }: PageProps
           </div>
         </div>
 
-        <ClimateDiagnostic data={getClimate(lang)} />
+        <Suspense fallback={<div className="card h-[520px] animate-pulse" />}>
+          <ClimateSection params={params} searchParams={searchParams} />
+        </Suspense>
       </PageContainer>
     </main>
   );

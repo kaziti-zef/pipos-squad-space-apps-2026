@@ -19,6 +19,17 @@ export interface DrawnParcel {
 
 type Tool = "draw" | "edit" | null;
 
+/** Lieu vers lequel centrer la carte (recherche) ; `key` change à chaque demande. */
+export interface MapFocus {
+  lat: number;
+  lon: number;
+  zoom: number;
+  key: number;
+}
+
+/** Pourquoi la position n'a pas pu être obtenue (message adapté dans l'éditeur). */
+export type LocateFailure = "insecure" | "denied" | "unavailable";
+
 export const YAOUNDE: [number, number] = [3.8131, 11.4522];
 
 const OSM = {
@@ -104,6 +115,8 @@ function DrawControl({
         const poly = L.polygon(initial.map(([lon, lat]) => [lat, lon] as [number, number]), POLY_STYLE);
         g.addLayer(poly);
         cb.current.onChange(summarize(poly));
+        // Parcelle existante (modification) : la carte s'ouvre centrée sur son contour.
+        map.fitBounds(poly.getBounds(), { maxZoom: 18, padding: [40, 40], animate: false });
       }
       map.on(handlers);
       setReady(true);
@@ -157,28 +170,69 @@ function DrawControl({
   return null;
 }
 
-function Locate({ request, onDenied }: { request: number; onDenied: () => void }) {
+/** Point bleu « vous êtes ici » et cercle de précision du GPS. */
+const ME_STYLE = { radius: 8, color: "#ffffff", weight: 3, fillColor: "#2563eb", fillOpacity: 1 };
+const ACCURACY_STYLE = { color: "#2563eb", weight: 1, fillColor: "#2563eb", fillOpacity: 0.12, interactive: false };
+
+function Locate({
+  request,
+  onDenied,
+  onLocated,
+  label,
+}: {
+  request: number;
+  onDenied: (reason: LocateFailure) => void;
+  onLocated?: () => void;
+  label: string;
+}) {
   const map = useMap();
+  const layers = useRef<L.Layer[]>([]);
+
   useEffect(() => {
     if (!request) return;
-    if (!("geolocation" in navigator)) return onDenied();
+    // Le GPS du navigateur n'est disponible que sur https (ou localhost) : sur http://192.168…, il est bloqué.
+    if (!window.isSecureContext) return onDenied("insecure");
+    if (!("geolocation" in navigator)) return onDenied("unavailable");
     let active = true;
     // La réponse GPS peut arriver après le démontage de la carte : on l'ignore alors.
-    const fly = (target: [number, number], zoom: number) => {
-      if (active && map.getContainer().isConnected) map.flyTo(target, zoom);
-    };
+    const alive = () => active && map.getContainer().isConnected;
     navigator.geolocation.getCurrentPosition(
-      (pos) => fly([pos.coords.latitude, pos.coords.longitude], 17),
-      () => {
-        fly(YAOUNDE, 15);
-        if (active) onDenied();
+      (pos) => {
+        if (!alive()) return;
+        const here: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+        layers.current.forEach((l) => map.removeLayer(l));
+        const accuracy = L.circle(here, { ...ACCURACY_STYLE, radius: Math.min(pos.coords.accuracy, 2000) });
+        const dot = L.circleMarker(here, ME_STYLE).bindTooltip(label, { direction: "top", offset: [0, -8] });
+        layers.current = [accuracy.addTo(map), dot.addTo(map)];
+        map.flyTo(here, pos.coords.accuracy > 500 ? 15 : 17);
+        onLocated?.();
       },
-      { timeout: 8000 },
+      (err) => {
+        if (!alive()) return;
+        onDenied(err.code === err.PERMISSION_DENIED ? "denied" : "unavailable");
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
     );
     return () => {
       active = false;
     };
-  }, [request, map, onDenied]);
+  }, [request, map, onDenied, onLocated, label]);
+
+  useEffect(
+    () => () => {
+      layers.current.forEach((l) => map.removeLayer(l));
+    },
+    [map],
+  );
+  return null;
+}
+
+/** Centre la carte sur le lieu choisi dans la recherche. */
+function FocusOn({ focus }: { focus?: MapFocus }) {
+  const map = useMap();
+  useEffect(() => {
+    if (focus) map.flyTo([focus.lat, focus.lon], focus.zoom);
+  }, [focus, map]);
   return null;
 }
 
@@ -220,12 +274,16 @@ export default function ParcelDrawMap({
   onError,
   locateRequest,
   onLocateDenied,
+  onLocated,
+  focus,
 }: {
   initial?: [number, number][];
   onChange: (p: DrawnParcel | null) => void;
   onError: (message: string) => void;
   locateRequest: number;
-  onLocateDenied: () => void;
+  onLocateDenied: (reason: LocateFailure) => void;
+  onLocated?: () => void;
+  focus?: MapFocus;
 }) {
   const d = useI18n().t.draw;
   const [tool, setTool] = useState<Tool>(null);
@@ -246,7 +304,8 @@ export default function ParcelDrawMap({
           onChange={onChange}
           onError={onError}
         />
-        <Locate request={locateRequest} onDenied={onLocateDenied} />
+        <Locate request={locateRequest} onDenied={onLocateDenied} onLocated={onLocated} label={d.youAreHere} />
+        <FocusOn focus={focus} />
       </MapContainer>
 
       <div

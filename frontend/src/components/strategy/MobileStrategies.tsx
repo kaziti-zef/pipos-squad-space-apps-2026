@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ButtonLink } from "@/components/ui/Button";
+import { Button, ButtonLink } from "@/components/ui/Button";
 import { ScoreRing } from "@/components/ui/Indicators";
 import { useI18n } from "@/i18n/client";
 import { SEASON_LABELS } from "@/lib/domain/crops";
@@ -14,7 +14,7 @@ import { useStrategySimulation } from "./StrategiesView";
 export function MobileStrategies({ data, parcelId }: { data: StrategiesResponse; parcelId: string }) {
   const { t, lang, href } = useI18n();
   const m = t.strategies.mobile;
-  const { results, setCrop } = useStrategySimulation(data);
+  const { results, setCrop, remote } = useStrategySimulation(data);
   const [tab, setTab] = useState(1);
   const r = results[tab];
 
@@ -57,22 +57,34 @@ export function MobileStrategies({ data, parcelId }: { data: StrategiesResponse;
             <SeasonRow
               key={k}
               compact
-              label={SEASON_LABELS[k]}
+              label={r.base.sequence[k]?.label ?? SEASON_LABELS[k]}
               cropId={c}
+              cropName={r.base.sequence[k]?.crop_name}
               index={k}
               modified={!!r.modified[k]}
               incompatible={false}
+              excluded={remote?.excluded}
               onChange={(crop) => setCrop(r.base.id, k, crop)}
             />
           ))}
         </div>
         <div className="flex gap-2">
-          <ButtonLink href={href(`/parcelles/${parcelId}/strategies/${r.base.id}`)} variant="secondary" className="flex-1">
+          <ButtonLink
+            href={href(remote ? remote.detailHref(r.base.id) : `/parcelles/${parcelId}/strategies/${r.base.id}`)}
+            variant="secondary"
+            className="flex-1"
+          >
             {m.details}
           </ButtonLink>
-          <ButtonLink href={href(`/parcelles/${parcelId}/historique`)} className="flex-1">
-            {t.strategies.retain}
-          </ButtonLink>
+          {remote ? (
+            <Button onClick={() => remote.retain(r.base.id)} disabled={remote.busy} className="flex-1">
+              {t.strategies.retain}
+            </Button>
+          ) : (
+            <ButtonLink href={href(`/parcelles/${parcelId}/historique`)} className="flex-1">
+              {t.strategies.retain}
+            </ButtonLink>
+          )}
         </div>
       </article>
     </div>

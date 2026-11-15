@@ -3,6 +3,8 @@ import { Inter, Poppins } from "next/font/google";
 import { I18nProvider } from "@/i18n/client";
 import { LOCALES } from "@/i18n/config";
 import { getI18n } from "@/i18n/server";
+import { ApiModeProvider } from "@/lib/api/app-context";
+import { API_ENABLED } from "@/lib/api/config";
 import "../globals.css";
 
 const inter = Inter({
@@ -41,7 +43,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={lang} data-scroll-behavior="smooth" className={`${inter.variable} ${poppins.variable} h-full`}>
       <body className="min-h-full">
         <I18nProvider lang={lang} dict={t}>
-          {children}
+          <ApiModeProvider apiEnabled={API_ENABLED}>{children}</ApiModeProvider>
         </I18nProvider>
       </body>
     </html>

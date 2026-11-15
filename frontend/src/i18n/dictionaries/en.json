@@ -47,7 +47,15 @@
     "igname": "Yam",
     "tomate": "Tomato",
     "plantain": "Plantain",
-    "gombo": "Okra"
+    "gombo": "Okra",
+    "riz": "Rice",
+    "piment": "Chili pepper",
+    "macabo": "Cocoyam",
+    "folon": "Amaranth (folon)",
+    "soja": "Soybean",
+    "crotalaire": "Sunn hemp",
+    "mucuna": "Velvet bean (mucuna)",
+    "jachere": "Fallow"
   },
   "months": [
     "January",
@@ -305,15 +313,20 @@
     "ctaHistory": "See the history",
     "emptyTitle": "Draw your first field",
     "emptyText": "Draw the outline of your plot on the map. AgriRot then automatically fetches the NASA data for your area.",
-    "emptyCta": "Start drawing"
+    "emptyCta": "Start drawing",
+    "kpiReady": "Plots ready",
+    "kpiChosen": "Rotations chosen",
+    "subtitleFarm": "{farm} · {n} member(s)",
+    "edit": "Edit",
+    "editAria": "Edit or delete parcel {name}"
   },
   "parcelNew": {
     "pageTitle": "New plot",
     "searchLabel": "Search for a place",
-    "searchPlaceholder": "Search for a place (e.g. Mbankomo)",
+    "searchPlaceholder": "Village, town or coordinates (e.g. Mbankomo)",
     "myPosition": "My location",
     "hint": "Click on each corner of your field, then on the first point to close the outline.",
-    "gpsDenied": "GPS location refused — map centred on Yaoundé. Use the search.",
+    "gpsDenied": "Location refused. Allow location for this site in the browser, or use the search.",
     "invalid": "Invalid outline:",
     "nameLabel": "Plot name",
     "auto": "Calculated automatically",
@@ -328,7 +341,26 @@
     "rainySeasons": "Rainy seasons",
     "rainySeasonsValue": "2 / year",
     "ndvi": "Average NDVI",
-    "save": "Save and analyse"
+    "save": "Save and analyse",
+    "defaultName": "My plot",
+    "afterSave": "Calculated when saved",
+    "searchButton": "Search",
+    "searching": "Searching…",
+    "searchResults": "Places found",
+    "searchNoResult": "Place not found. Try a nearby village or town, or coordinates (3.85, 11.50).",
+    "searchError": "Search is not responding right now. Check your connection or move the map by hand.",
+    "gpsInsecure": "Phones only share their location with secure sites (https address). It works on the online site; when testing on the local network, use the search.",
+    "gpsUnavailable": "Location not found (weak GPS signal). Try again outdoors or use the search.",
+    "gpsLocating": "Finding your location…",
+    "editTitle": "Edit parcel",
+    "editHint": "To fix the outline, tap the pencil tool and move the points. You can also just change the name.",
+    "saveEdit": "Save",
+    "opening": "Saved, opening…",
+    "outlineChanged": "The outline changed: area, altitude and slope will be recalculated, and strategies already chosen will be flagged for review.",
+    "delete": "Delete this parcel",
+    "deleteConfirm": "Delete “{name}”? Its field data, priorities and history will be erased for every member. This cannot be undone.",
+    "deleteYes": "Yes, delete",
+    "deleting": "Deleting…"
   },
   "draw": {
     "toolbar": "Drawing tools",
@@ -342,13 +374,14 @@
     "tipEnd": "Click on the first point to close the outline.",
     "error": "<strong>Invalid outline:</strong> sides must not cross.",
     "editTip": "Drag the corners to adjust the outline.",
-    "editSub": "Click “Edit” again to finish."
+    "editSub": "Click “Edit” again to finish.",
+    "youAreHere": "You are here"
   },
   "diagnostic": {
     "pageTitle": "NASA diagnosis",
     "breadcrumb": "Dashboard",
     "title": "NASA climate diagnosis",
-    "subtitle": "Your area, month by month, compared with the 1981–2024 normal.",
+    "subtitle": "Your area, month by month, compared with the long-term normal.",
     "cta": "Confirm and complete my information →",
     "calendarTitle": "Season calendar · Yaoundé",
     "seasons": [
@@ -361,7 +394,7 @@
     "legendStress": "Water stress",
     "legendBare": "Bare soil in the rainy season",
     "legendSelected": "Selected month",
-    "cacheStrong": "Data saved on 12/11/2026",
+    "cacheStrong": "Data saved on {date}",
     "cacheText": "— NASA POWER is not responding right now.",
     "localStrong": "Demonstration dataset",
     "localText": "— NASA sources unavailable, low confidence.",
@@ -369,7 +402,7 @@
     "rain": {
       "title": "Rainfall",
       "unit": "mm / month",
-      "zone": "Your area 2026",
+      "zone": "Your area {year}",
       "normal": "Normal",
       "term": "Water balance",
       "source": "GPM IMERG · NASA POWER"
@@ -377,7 +410,7 @@
     "temp": {
       "title": "Temperature",
       "unit": "°C",
-      "zone": "2026 average",
+      "zone": "{year} average",
       "normal": "Normal",
       "term": "Heat stress",
       "source": "NASA POWER · T2M"
@@ -394,13 +427,13 @@
     "ndvi": {
       "title": "Vegetation",
       "unit": "NDVI",
-      "zone": "NDVI 2026",
+      "zone": "NDVI {year}",
       "estimated": "Estimated value",
       "term": "NDVI",
       "source": "MODIS · 250 m"
     },
     "selectedMonth": "Selected month",
-    "monthYear": "{month} 2026",
+    "monthYear": "{month} {year}",
     "rows": {
       "temp": "Temperature",
       "rain": "Rainfall",
@@ -440,7 +473,9 @@
       "none": "no month"
     },
     "expand": "Enlarge the {title} chart",
-    "closeFull": "Close full screen"
+    "closeFull": "Close full screen",
+    "unavailable": "This data is not available for your area.",
+    "heatDefinition": "Average temperature of the month compared with the long-term normal of your area."
   },
   "terrain": {
     "pageTitle": "Field data",
@@ -494,7 +529,7 @@
       "None",
       "Good"
     ],
-    "history": "History of the last 3 seasons",
+    "history": "Your crops, season by season",
     "inProgress": "in progress",
     "fallow": "Fallow (rest)",
     "other": "Other crop…",
@@ -543,15 +578,21 @@
     },
     "corrected": "✓ Corrected: {value}",
     "fixQuestion": "What did you observe?",
-    "planTitle": "Your plan for what comes next",
-    "planHint": "Optional. Add, in order, the crops you want to grow next, with no limit on seasons. AgriRot will take it into account.",
+    "planTitle": "Coming seasons",
+    "planHint": "Optional. Each crop you add takes one season: the first will be sown in {season}, the next one the season after, and so on.",
     "planEmpty": "No crop planned yet.",
     "planAdd": "Add",
     "planChoose": "Crop to add",
     "planRemove": "Remove {crop} from the plan",
     "planUp": "Move {crop} earlier",
     "planDown": "Move {crop} later",
-    "planNext": "Then"
+    "planNext": "Then",
+    "unknownSeason": "I don't know",
+    "eyebrowParcel": "{name} · step 2 of 3",
+    "calendarHint": "Two growing seasons a year: S1 (sown in March) and S2 (sown in August). Say what you grew, then what you plan to grow.",
+    "pastTitle": "The last 3 seasons",
+    "planAddFor": "{season}:",
+    "planChooseFor": "Crop planned for {season}"
   },
   "priorities": {
     "pageTitle": "Priorities and constraints",
@@ -575,7 +616,10 @@
     "excludeHint": "— tap to exclude",
     "tooMany": "Almost all crops are excluded: the rotation rules may not be met.",
     "back": "← Field data",
-    "calculate": "Calculate the strategies"
+    "calculate": "Calculate the strategies",
+    "eyebrowParcel": "{name} · step 3 of 3",
+    "coverCrop": "cover crop",
+    "coverCropHint": "Velvet bean (mucuna) and sunn hemp are cover crops: they are not harvested, they feed and protect the soil between two crops."
   },
   "strategies": {
     "pageTitle": "Compare strategies",
@@ -625,12 +669,22 @@
       "confidence": "Confidence"
     },
     "seasonsTitle": "Why two seasons, S1 and S2?",
-    "seasonsText": "In Yaoundé it rains twice a year. S1 is the first rainy season (March to June), S2 the second (September to November). In between it is too dry to sow without watering, so AgriRot suggests one crop per rainy season, two per year.",
+    "seasonsText": "In Yaoundé it rains twice a year. S1 is the first rainy season: sowing in March, rain until June. S2 is the second: sowing in August, rain until November. The rest of the year is too dry to sow without watering, so AgriRot suggests one crop per rainy season, two per year.",
     "remindersTitle": "Reminders for this strategy",
     "remindersText": "Get a message before each sowing and each harvest.",
     "remindersOn": "Reminders on",
     "remindersOff": "Turn on reminders",
-    "remindersNext": "Next reminder: sowing {crop}, end of February {year}."
+    "remindersNext": "Next reminder: sowing {crop}, end of February {year}.",
+    "computing": "Calculating strategies…",
+    "computingHint": "AgriRot is combining NASA data for your area with your information. This can take a few seconds.",
+    "recomputing": "Recalculating…",
+    "computedAt": "NASA data · calculated on {date}",
+    "eyebrowParcel": "{name} · {area} ha",
+    "horizonLabel": "Plan length",
+    "horizonYear": "1 year",
+    "horizonYears": "{n} years",
+    "horizonHint": "2 seasons a year. Changing the length recomputes the plan.",
+    "plannedNote": "Planned rotation: your planned crops season by season, then your usual crops (your history) for the seasons you did not plan. Without history, those seasons stay fallow."
   },
   "fiche": {
     "pageTitle": "Explanation sheet",
@@ -673,7 +727,11 @@
     "noteText": "Validated during the field visit. Plan a light ploughing before S1 sowing.",
     "addNote": "Add an observation note",
     "notePlaceholder": "What you observe in the field…",
-    "retain": "Choose this strategy"
+    "retain": "Choose this strategy",
+    "computedAt": "Calculated on {date}",
+    "expiredTitle": "This calculation is no longer available",
+    "expiredText": "Calculations are kept for 24 hours. Run the comparison again to get up-to-date results.",
+    "expiredCta": "Run the calculation again"
   },
   "history": {
     "pageTitle": "History",
@@ -773,5 +831,16 @@
         "when": "3 days ago"
       }
     }
+  },
+  "api": {
+    "network": "Cannot connect. Check your network and try again.",
+    "pending": "Please wait…",
+    "saving": "Saving…",
+    "demoMode": "Demo mode",
+    "logout": "Log out",
+    "conflict": "Someone changed this information in the meantime. Reload the page to see the latest version, then enter your changes again.",
+    "retry": "Try again",
+    "addNote": "Add note",
+    "invitationLink": "Invitation link to share"
   }
 }

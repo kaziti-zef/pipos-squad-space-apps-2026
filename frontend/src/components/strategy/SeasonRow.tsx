@@ -1,9 +1,11 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
+import { useSeasonText } from "@/components/ui/season";
 import { useI18n } from "@/i18n/client";
 import { fmt } from "@/i18n/config";
-import { CROPS, cropStyle } from "@/lib/domain/crops";
+import { useApp } from "@/lib/api/app-context";
+import { cropStyle } from "@/lib/domain/crops";
 import type { Transition } from "@/lib/domain/simulate";
 import { cn } from "@/lib/utils";
 
@@ -25,15 +27,18 @@ export function TransitionNote({ t: transition }: { t: Transition }) {
 export function SeasonRow({
   label,
   cropId,
+  cropName,
   index,
   modified,
   incompatible,
-  excluded = ["gombo"],
+  excluded,
   onChange,
   compact = false,
 }: {
   label: string;
   cropId: string;
+  /** Nom renvoyé par l'API, pour une culture absente du dictionnaire. */
+  cropName?: string;
   index: number;
   modified: boolean;
   incompatible: boolean;
@@ -42,7 +47,13 @@ export function SeasonRow({
   compact?: boolean;
 }) {
   const { t } = useI18n();
-  const name = (id: string) => t.crops[id as keyof typeof t.crops] ?? id;
+  const app = useApp();
+  const { fromKey } = useSeasonText();
+  const season = fromKey(label);
+  // Démo : le gombo est exclu dans les priorités d'exemple. Backend : exclusions lues dans les préférences.
+  const blocked = excluded ?? (app.apiEnabled ? [] : ["gombo"]);
+  const name = (id: string) =>
+    t.crops[id as keyof typeof t.crops] ?? app.cropName(id) ?? (id === cropId && cropName ? cropName : id);
   const style = cropStyle(cropId);
   return (
     <label
@@ -53,7 +64,10 @@ export function SeasonRow({
         onChange && "cursor-pointer",
       )}
     >
-      <span className={cn("text-[13px] font-semibold text-ink-muted", compact ? "w-[58px] text-[13px]" : "w-[62px]")}>{label}</span>
+      <span className={cn("flex shrink-0 flex-col leading-tight", compact ? "w-[78px]" : "w-[84px]")}>
+        <span className="text-[13px] font-bold text-ink-soft">{season.title}</span>
+        {season.months && <span className="text-[12px] text-ink-muted">{season.months}</span>}
+      </span>
       <span aria-hidden className="size-2.5 rounded-full" style={{ background: style.dot }} />
       <span className="flex-1 font-semibold">{name(cropId)}</span>
       {modified && <span className="rounded-full bg-info-100 px-2 py-0.5 text-[13px] font-semibold text-info-600">{t.strategies.modified}</span>}
@@ -61,16 +75,19 @@ export function SeasonRow({
         <>
           <ChevronDown aria-hidden className="size-3.5 text-ink-muted" />
           <select
-            aria-label={fmt(t.strategies.changeCrop, { season: label })}
+            aria-label={fmt(t.strategies.changeCrop, { season: season.title })}
             value={cropId}
             onChange={(e) => onChange(e.target.value)}
             className="absolute inset-0 w-full cursor-pointer opacity-0"
           >
-            {CROPS.filter((c) => !excluded.includes(c.id)).map((c) => (
-              <option key={c.id} value={c.id}>
-                {name(c.id)}
-              </option>
-            ))}
+            {!app.cropIds.includes(cropId) && <option value={cropId}>{name(cropId)}</option>}
+            {app.cropIds
+              .filter((id) => !blocked.includes(id))
+              .map((id) => (
+                <option key={id} value={id}>
+                  {name(id)}
+                </option>
+              ))}
           </select>
         </>
       )}

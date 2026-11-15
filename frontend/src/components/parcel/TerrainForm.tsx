@@ -1,12 +1,20 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
-import { Carrot, Lock, Wheat } from "lucide-react";
+import { Lock, Sprout } from "lucide-react";
 import { Banner } from "@/components/ui/Banner";
-import { ButtonLink } from "@/components/ui/Button";
+import { Button, ButtonLink } from "@/components/ui/Button";
 import { FuturePlan } from "@/components/parcel/FuturePlan";
 import { useI18n } from "@/i18n/client";
 import { fmt } from "@/i18n/config";
+import { useApp } from "@/lib/api/app-context";
+import * as endpoints from "@/lib/api/endpoints";
+import { ApiError, reaction } from "@/lib/api/errors";
+import type { History, LocalInputs } from "@/lib/api/types";
+import { useSeasonText } from "@/components/ui/season";
+import { cropStyle } from "@/lib/domain/crops";
+import { seasonAt } from "@/lib/domain/seasons";
 import { cn, confidenceLevel, fr } from "@/lib/utils";
 
 /** Valeurs satellites présentées en langage courant (pas de NDVI, pas de poids affichés). */
@@ -14,11 +22,26 @@ const NASA_IDS = ["rain", "temp", "ndvi"] as const;
 type NasaId = (typeof NASA_IDS)[number];
 type NasaAnswer = "ok" | "fixing" | "less" | "more";
 
-const HISTORY = [
-  { label: "2025-S2", crop: "mais", icon: Wheat, bg: "bg-warn-100", fg: "text-warn-700", current: false },
-  { label: "2026-S1", crop: "mais", icon: Wheat, bg: "bg-warn-100", fg: "text-warn-700", current: false },
-  { label: "2026-S2", crop: "manioc", icon: Carrot, bg: "bg-root-100", fg: "text-root-800", current: true },
-] as const;
+/** Trois dernières saisons, de la plus ancienne à la plus récente (season_index -3, -2, -1 -> saisons -2, -1, 0). */
+const HISTORY_SEASONS = [-2, -1, 0] as const;
+const DEMO_HISTORY = ["mais", "mais", "manioc"];
+const FALLOW = "jachere";
+
+/** Valeurs envoyées à l'API, dans l'ordre des libellés du dictionnaire (terrain.textures, drainageOpts…). */
+const TEXTURES = ["sableux", "limoneux", "argileux", "argilo-limoneux", "sablo-limoneux"] as const;
+const DRAINAGE = ["moyen", "bon", "faible"] as const;
+const ORGANIC = [null, "faible", "moyenne", "élevée"] as const;
+const DRY = ["faible", "nulle", "bonne"] as const;
+/** Pente : Plat / Légère / Forte -> degrés représentatifs ; « Je ne sais pas » -> mesure satellite (SRTM). */
+const SLOPE_DEG = [1, 3, 10] as const;
+const slopeIndex = (deg: number | null, confirmed: boolean) => (deg === null || !confirmed ? 3 : deg < 2 ? 0 : deg < 6 ? 1 : 2);
+/** Corrections des valeurs satellites (contrat : mode « adjustment », mars = mois 3). */
+const NASA_FIX = { rain: { field: "rain_mm", step: 30 }, temp: { field: "temp_avg_c", step: 1 } } as const;
+
+export interface TerrainInitial {
+  local: LocalInputs | null;
+  history: History | null;
+}
 
 function Section({ n, title, children }: { n: number; title: string; children: ReactNode }) {
   return (
@@ -47,20 +70,99 @@ const choice = (selected: boolean) =>
  * Confiance par champ (contrat v2) : 1,0 saisi ou confirmé · 0,7 valeur satellite · 0,4 défaut régional.
  * L'indice est la moyenne des champs réellement demandés.
  */
-export function TerrainForm({ parcelId, readOnly }: { parcelId: string; readOnly: boolean }) {
+export function TerrainForm({ parcelId, readOnly, initial }: { parcelId: string; readOnly: boolean; initial?: TerrainInitial }) {
   const { t, lang, href } = useI18n();
+  const router = useRouter();
+  const { apiEnabled, cropIds, cropName } = useApp();
+  const seasonText = useSeasonText();
+  const historySeasons = HISTORY_SEASONS.map((s) => seasonAt(s));
   const tr = t.terrain;
-  const [texture, setTexture] = useState(3);
-  const [phUnknown, setPhUnknown] = useState(false);
-  const [ph, setPh] = useState(5.8);
-  const [organic, setOrganic] = useState(0); // 0 = « Je ne sais pas »
-  const [slope, setSlope] = useState(1);
-  const [irrigation, setIrrigation] = useState(false);
-  const [nasa, setNasa] = useState<Partial<Record<NasaId, NasaAnswer>>>({});
+  const local = initial?.local ?? null;
+  const soil = local?.soil;
+  const idx = <T,>(list: readonly T[], v: T | null | undefined, fallback: number) => (v == null ? fallback : Math.max(0, list.indexOf(v)));
+  const [texture, setTexture] = useState(local ? idx(TEXTURES, soil?.texture, -1) : 3);
+  const [phUnknown, setPhUnknown] = useState(local ? soil?.ph == null : false);
+  const [ph, setPh] = useState(soil?.ph ?? 5.8);
+  const [drainage, setDrainage] = useState(idx(DRAINAGE, soil?.drainage, 0));
+  const [organic, setOrganic] = useState(local ? Math.max(0, ORGANIC.indexOf(soil?.organic_matter ?? null)) : 0); // 0 = « Je ne sais pas »
+  const [slope, setSlope] = useState(local ? slopeIndex(soil?.slope_deg ?? null, !!soil?.slope_confirmed) : 1);
+  const [irrigation, setIrrigation] = useState(local?.water.has_irrigation ?? false);
+  const [dry, setDry] = useState(idx(DRY as readonly string[], local?.water.dry_season_availability, 0));
+  const [history, setHistory] = useState<(string | null)[]>(() => {
+    if (!apiEnabled) return DEMO_HISTORY;
+    const bySeason = new Map((initial?.history?.seasons ?? []).map((x) => [x.season_index, x.crop_id]));
+    return [-3, -2, -1].map((i) => bySeason.get(i as -3 | -2 | -1) ?? null);
+  });
+  const [plan, setPlan] = useState<string[]>(() =>
+    apiEnabled ? [...(local?.planned_rotation ?? [])].sort((a, b) => a.season - b.season).map((x) => x.crop_id) : ["niebe", "mais"],
+  );
+  const [nasa, setNasa] = useState<Partial<Record<NasaId, NasaAnswer>>>(() => {
+    const out: Partial<Record<NasaId, NasaAnswer>> = {};
+    for (const o of local?.nasa_overrides ?? []) {
+      const id: NasaId = o.field === "rain_mm" ? "rain" : "temp";
+      out[id] = o.value < 0 ? "less" : "more";
+    }
+    return out;
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [versions, setVersions] = useState({ local: local?.version ?? 0, history: initial?.history?.version ?? 0 });
+
+  /** PUT /local-inputs puis PUT /history (If-Match : version lue), puis étape suivante. */
+  const save = async () => {
+    if (!apiEnabled) return router.push(href(`/parcelles/${parcelId}/priorites`));
+    setSaving(true);
+    setError("");
+    try {
+      const body = {
+        soil: {
+          texture: texture >= 0 ? TEXTURES[texture] : null,
+          ph: phUnknown ? null : Math.round(ph * 10) / 10,
+          drainage: DRAINAGE[drainage],
+          organic_matter: ORGANIC[organic],
+          slope_deg: slope < 3 ? SLOPE_DEG[slope] : null,
+          slope_confirmed: slope < 3,
+        },
+        water: { has_irrigation: irrigation, dry_season_availability: irrigation ? DRY[dry] : "nulle" },
+        nasa_overrides: (["rain", "temp"] as const)
+          .filter((id) => nasa[id] === "less" || nasa[id] === "more")
+          .map((id) => ({
+            field: NASA_FIX[id].field,
+            month: 3,
+            mode: "adjustment" as const,
+            value: (nasa[id] === "less" ? -1 : 1) * NASA_FIX[id].step,
+          })),
+        practices: local?.practices ?? {},
+        pest_history: local?.pest_history ?? [],
+        planned_rotation: plan.slice(0, 12).map((crop_id, i) => ({ season: i + 1, crop_id })),
+      };
+      const seasons = history.flatMap((crop_id, i) =>
+        crop_id ? [{ season_index: (i - 3) as -3 | -2 | -1, crop_id, label: historySeasons[i].key }] : [],
+      );
+      // Les deux enregistrements sont indépendants : envoyés en parallèle (attente divisée par deux).
+      const [savedLocal, savedHistory] = await Promise.allSettled([
+        endpoints.inputs.putLocal(parcelId, body, versions.local),
+        endpoints.inputs.putHistory(parcelId, { seasons }, versions.history),
+      ]);
+      // Garder la version de ce qui a réussi, pour qu'un nouvel essai ne provoque pas de faux conflit.
+      setVersions((v) => ({
+        local: savedLocal.status === "fulfilled" ? savedLocal.value.version : v.local,
+        history: savedHistory.status === "fulfilled" ? savedHistory.value.version : v.history,
+      }));
+      if (savedLocal.status === "rejected") throw savedLocal.reason;
+      if (savedHistory.status === "rejected") throw savedHistory.reason;
+      router.push(href(`/parcelles/${parcelId}/priorites`));
+    } catch (err) {
+      if (err instanceof ApiError && reaction(err) === "reload_conflict") setError(t.api.conflict);
+      else if (err instanceof ApiError && reaction(err) === "relogin") router.push(href("/connexion"));
+      else setError(err instanceof ApiError ? err.message : t.api.network);
+      setSaving(false);
+    }
+  };
 
   const SLOPE_UNKNOWN = tr.slopeOpts.length - 1;
   const weights = [
-    1, // texture
+    texture >= 0 ? 1 : 0.4, // texture
     phUnknown ? 0.4 : 1,
     1, // drainage
     organic === 0 ? 0.4 : 1,
@@ -70,7 +172,7 @@ export function TerrainForm({ parcelId, readOnly }: { parcelId: string; readOnly
     ...NASA_IDS.map((id) => (nasa[id] && nasa[id] !== "fixing" ? 1 : 0.7)),
   ];
   const score = weights.reduce((a, b) => a + b, 0) / weights.length;
-  const unknownCount = Number(phUnknown) + Number(organic === 0) + Number(slope === SLOPE_UNKNOWN);
+  const unknownCount = Number(texture < 0) + Number(phUnknown) + Number(organic === 0) + Number(slope === SLOPE_UNKNOWN);
   const level = confidenceLevel(score);
   const color = level === "élevée" ? "var(--color-forest-700)" : level === "moyenne" ? "var(--color-warn-600)" : "var(--color-danger-600)";
 
@@ -137,9 +239,11 @@ export function TerrainForm({ parcelId, readOnly }: { parcelId: string; readOnly
             <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3.5">
               <label>
                 <p className="mb-2 text-sm font-semibold">{tr.drainage}</p>
-                <select className="field-input" disabled={readOnly}>
-                  {tr.drainageOpts.map((o) => (
-                    <option key={o}>{o}</option>
+                <select className="field-input" disabled={readOnly} value={drainage} onChange={(e) => setDrainage(Number(e.target.value))}>
+                  {tr.drainageOpts.map((o, i) => (
+                    <option key={o} value={i}>
+                      {o}
+                    </option>
                   ))}
                 </select>
               </label>
@@ -189,9 +293,11 @@ export function TerrainForm({ parcelId, readOnly }: { parcelId: string; readOnly
                 <label>
                   <p className="text-sm font-semibold">{tr.drySeason}</p>
                   <p className="mb-2 mt-0.5 text-sm text-ink-muted">{tr.dryHint}</p>
-                  <select className="field-input" disabled={readOnly}>
-                    {tr.dryOpts.map((o) => (
-                      <option key={o}>{o}</option>
+                  <select className="field-input" disabled={readOnly} value={dry} onChange={(e) => setDry(Number(e.target.value))}>
+                    {tr.dryOpts.map((o, i) => (
+                      <option key={o} value={i}>
+                        {o}
+                      </option>
                     ))}
                   </select>
                 </label>
@@ -200,41 +306,72 @@ export function TerrainForm({ parcelId, readOnly }: { parcelId: string; readOnly
           </Section>
 
           <Section n={3} title={tr.history}>
+            <p className="-mt-2 text-sm leading-[1.5] text-ink-muted">{tr.calendarHint}</p>
+            <h3 className="font-display text-base font-semibold">{tr.pastTitle}</h3>
             <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3">
-              {HISTORY.map((h) => {
-                const Icon = h.icon;
-                const crop = t.crops[h.crop];
+              {historySeasons.map((season, i) => {
+                const crop = history[i];
+                const style = crop && crop !== FALLOW ? cropStyle(crop) : null;
+                const name = crop === FALLOW ? tr.fallow : crop ? (t.crops[crop as keyof typeof t.crops] ?? cropName(crop) ?? crop) : tr.unknownSeason;
+                const { title, months } = seasonText.text(season);
+                const label = `${title} (${months})`;
                 return (
-                  <div key={h.label} className="flex flex-col gap-2.5 rounded-xl border-[1.5px] border-[#e8e1d4] p-3.5">
-                    <span className="text-sm font-semibold text-ink-muted">
-                      {h.label}
-                      {h.current && ` · ${tr.inProgress}`}
+                  <div key={season.key} className="flex flex-col gap-2.5 rounded-xl border-[1.5px] border-[#e8e1d4] p-3.5">
+                    <span className="flex flex-col text-sm leading-tight">
+                      <span className="font-bold text-ink-soft">
+                        {title}
+                        {i === historySeasons.length - 1 && <span className="font-semibold text-ink-muted"> · {tr.inProgress}</span>}
+                      </span>
+                      <span className="text-[13px] text-ink-muted">{months}</span>
                     </span>
                     <div className="flex items-center gap-2.5">
-                      <span className={cn("flex size-10 items-center justify-center rounded-md", h.bg)}>
-                        <Icon aria-hidden className={cn("size-[22px]", h.fg)} />
+                      <span className="flex size-10 items-center justify-center rounded-md" style={{ background: style?.bg ?? "var(--color-sand-200)" }}>
+                        <Sprout aria-hidden className="size-[22px]" style={{ color: style?.ink ?? "var(--color-ink-muted)" }} />
                       </span>
-                      <strong>{crop}</strong>
+                      <strong>{name}</strong>
                     </div>
-                    <select className="field-input" aria-label={fmt(tr.cropOf, { season: h.label })} disabled={readOnly} defaultValue={crop}>
-                      <option>{crop}</option>
-                      <option>{tr.fallow}</option>
-                      <option>{tr.other}</option>
+                    <select
+                      className="field-input"
+                      aria-label={fmt(tr.cropOf, { season: label })}
+                      disabled={readOnly}
+                      value={crop ?? ""}
+                      onChange={(e) => setHistory((h) => h.map((c, k) => (k === i ? e.target.value || null : c)))}
+                    >
+                      <option value="">{tr.unknownSeason}</option>
+                      <option value={FALLOW}>{tr.fallow}</option>
+                      {cropIds.map((id) => (
+                        <option key={id} value={id}>
+                          {t.crops[id as keyof typeof t.crops] ?? cropName(id) ?? id}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 );
               })}
             </div>
-            <p className="rounded-sm bg-warn-50 px-3 py-2.5 text-sm text-warn-800">{tr.r1Warning}</p>
-            <FuturePlan readOnly={readOnly} />
+            {history[1] && history[1] === history[2] && history[1] !== FALLOW && (
+              <p className="rounded-sm bg-warn-50 px-3 py-2.5 text-sm text-warn-800">{tr.r1Warning}</p>
+            )}
+            <FuturePlan readOnly={readOnly} initial={plan} onChange={setPlan} />
           </Section>
 
           <div className="flex flex-wrap justify-between gap-3">
             <ButtonLink href={href(`/parcelles/${parcelId}/diagnostic`)} variant="secondary">
               {tr.back}
             </ButtonLink>
-            <ButtonLink href={href(`/parcelles/${parcelId}/priorites`)}>{tr.next}</ButtonLink>
+            {readOnly ? (
+              <ButtonLink href={href(`/parcelles/${parcelId}/priorites`)}>{tr.next}</ButtonLink>
+            ) : (
+              <Button onClick={save} disabled={saving}>
+                {saving ? t.api.saving : tr.next}
+              </Button>
+            )}
           </div>
+          {error && (
+            <p role="alert" className="rounded-md bg-danger-100 px-3.5 py-3 text-sm text-danger-800">
+              {error}
+            </p>
+          )}
         </div>
 
         <aside className="flex flex-[1_1_300px] flex-col gap-[18px]">

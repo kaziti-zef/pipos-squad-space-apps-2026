@@ -17,13 +17,18 @@ export interface SavedStrategyEntry {
   id: string;
   saved_at: string;
   saved_by: string;
-  saved_by_role: Role;
+  saved_by_role?: Role;
   strategy_id: StrategyType;
+  /** Backend : identifiants pour ouvrir la fiche (?c=…), le PDF et ajouter une note. */
+  saved_id?: string;
+  computation_id?: string;
   name: string;
   score: number;
   confidence?: ConfidenceLevel;
   scenario?: string;
   sequence?: string[];
+  /** Backend : noms renvoyés par l'API, pour les cultures absentes du dictionnaire. */
+  sequence_names?: string[];
   outdated_geometry: boolean;
   outdated_note?: string;
   notes: HistoryNote[];

@@ -4,7 +4,15 @@ import "leaflet/dist/leaflet.css";
 import { useSyncExternalStore } from "react";
 import { MapContainer, Polygon, TileLayer, Tooltip } from "react-leaflet";
 import type { LatLngExpression } from "leaflet";
-import type { Parcel } from "@/lib/types";
+
+/** Ce dont la carte a besoin : commun aux parcelles de démo et aux réponses GET /farms/{id}/parcels. */
+export interface MapParcel {
+  id: string;
+  name: string;
+  area_ha: number;
+  geometry: { coordinates: number[][][] };
+  last_saved_strategy?: unknown;
+}
 import { useI18n } from "@/i18n/client";
 import { fr } from "@/lib/utils";
 
@@ -13,7 +21,7 @@ export const ESRI_IMAGERY = {
   attribution: "© Esri, Maxar, Earthstar Geographics",
 };
 
-export function toLatLngs(p: Parcel): LatLngExpression[] {
+export function toLatLngs(p: MapParcel): LatLngExpression[] {
   return p.geometry.coordinates[0].map(([lon, lat]) => [lat, lon] as [number, number]);
 }
 
@@ -35,7 +43,7 @@ export default function FarmMap({
   height = "100%",
   ariaLabel,
 }: {
-  parcels: Parcel[];
+  parcels: MapParcel[];
   height?: number | string;
   ariaLabel?: string;
 }) {

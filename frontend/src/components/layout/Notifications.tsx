@@ -1,31 +1,115 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
-import { Bell, CloudRain, Sprout, ListChecks, X } from "lucide-react";
+import { Bell, CloudRain, ListChecks, Sprout, ThermometerSun, TriangleAlert, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useI18n } from "@/i18n/client";
 import { fmt } from "@/i18n/config";
+import { useApp } from "@/lib/api/app-context";
+import * as endpoints from "@/lib/api/endpoints";
+import type { AlertCode, AppNotification } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
-type NotifId = "sowing" | "rain" | "ready";
+interface Item {
+  id: string;
+  icon: LucideIcon;
+  tone: string;
+  title: string;
+  text: string;
+  when: string;
+  path: string;
+  read: boolean;
+}
 
-/** Notifications de démonstration ; à remplacer par l'API (alertes climat, rappels de semis, calculs terminés). */
-const NOTIFS: { id: NotifId; icon: LucideIcon; tone: string; path: string }[] = [
-  { id: "sowing", icon: Sprout, tone: "bg-leaf-100 text-forest", path: "/parcelles/pcl_55/strategies/recommended" },
-  { id: "rain", icon: CloudRain, tone: "bg-warn-100 text-warn-800", path: "/parcelles/pcl_55/diagnostic" },
-  { id: "ready", icon: ListChecks, tone: "bg-info-100 text-info-800", path: "/parcelles/pcl_55/strategies" },
-];
+/** Pictogramme et couleur selon le code d'alerte de la surveillance (backend T65). */
+const ALERT_STYLE: Record<AlertCode, { icon: LucideIcon; tone: string }> = {
+  SOWING_FAVORABLE: { icon: Sprout, tone: "bg-leaf-100 text-forest" },
+  SOWING_DELAY: { icon: Sprout, tone: "bg-warn-100 text-warn-800" },
+  WATER_STRESS: { icon: CloudRain, tone: "bg-warn-100 text-warn-800" },
+  HEAVY_RAIN: { icon: CloudRain, tone: "bg-info-100 text-info-800" },
+  HEAT_STRESS: { icon: ThermometerSun, tone: "bg-danger-100 text-danger-800" },
+  SEASON_ANOMALY: { icon: TriangleAlert, tone: "bg-warn-100 text-warn-800" },
+  ROTATION_MISMATCH: { icon: ListChecks, tone: "bg-danger-100 text-danger-800" },
+};
 
-/** Cloche + panneau de notifications (retour équipe du 14/11/2026). */
+const POLL_MS = 2 * 60 * 1000; // guide du kit : interroger toutes les 1 à 5 min
+
+function relative(iso: string, lang: string) {
+  const diff = (new Date(iso).getTime() - Date.now()) / 1000;
+  const rtf = new Intl.RelativeTimeFormat(lang, { numeric: "auto" });
+  if (Math.abs(diff) < 3600) return rtf.format(Math.round(diff / 60), "minute");
+  if (Math.abs(diff) < 86400) return rtf.format(Math.round(diff / 3600), "hour");
+  return rtf.format(Math.round(diff / 86400), "day");
+}
+
+/** Cloche + panneau de notifications. Mode API : GET /notifications ; mode démo : 3 exemples. */
 export function NotificationBell({ tone = "dark", className }: { tone?: "dark" | "light"; className?: string }) {
-  const { t, href } = useI18n();
+  const { t, lang, href } = useI18n();
+  const { apiEnabled } = useApp();
   const n = t.notifications;
   const [open, setOpen] = useState(false);
-  const [read, setRead] = useState<Record<string, boolean>>({ ready: true });
+  const [apiItems, setApiItems] = useState<AppNotification[]>([]);
+  const [demoRead, setDemoRead] = useState<Record<string, boolean>>({ ready: true });
   const panelId = useId();
   const root = useRef<HTMLDivElement>(null);
-  const unread = NOTIFS.filter((x) => !read[x.id]).length;
+
+  const load = useCallback(async () => {
+    try {
+      const res = await endpoints.notifications.list({ limit: 20 });
+      setApiItems(res.notifications);
+    } catch {
+      /* hors ligne ou session expirée : la cloche reste silencieuse */
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!apiEnabled) return;
+    const first = setTimeout(load, 0);
+    const id = setInterval(load, POLL_MS);
+    return () => {
+      clearTimeout(first);
+      clearInterval(id);
+    };
+  }, [apiEnabled, load]);
+
+  const items: Item[] = apiEnabled
+    ? apiItems.map((x) => ({
+        id: x.id,
+        ...(ALERT_STYLE[x.code] ?? { icon: Bell, tone: "bg-sand-200 text-ink" }),
+        title: x.title,
+        text: x.message,
+        when: relative(x.created_at, lang),
+        path: `/parcelles/${x.parcel_id}/historique`,
+        read: x.read,
+      }))
+    : (
+        [
+          ["sowing", Sprout, "bg-leaf-100 text-forest", "/parcelles/pcl_55/strategies/recommended"],
+          ["rain", CloudRain, "bg-warn-100 text-warn-800", "/parcelles/pcl_55/diagnostic"],
+          ["ready", ListChecks, "bg-info-100 text-info-800", "/parcelles/pcl_55/strategies"],
+        ] as const
+      ).map(([id, icon, toneCls, path]) => ({
+        id,
+        icon,
+        tone: toneCls,
+        ...n.items[id],
+        text: n.items[id].text,
+        path,
+        read: !!demoRead[id],
+      }));
+  const unread = items.filter((x) => !x.read).length;
+
+  const markRead = (id: string) => {
+    if (!apiEnabled) return setDemoRead((r) => ({ ...r, [id]: true }));
+    setApiItems((list) => list.map((x) => (x.id === id ? { ...x, read: true } : x)));
+    void endpoints.notifications.markRead(id).catch(() => undefined);
+  };
+  const markAll = () => {
+    if (!apiEnabled) return setDemoRead(Object.fromEntries(items.map((x) => [x.id, true])));
+    setApiItems((list) => list.map((x) => ({ ...x, read: true })));
+    void endpoints.notifications.markAllRead().catch(() => undefined);
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -47,7 +131,10 @@ export function NotificationBell({ tone = "dark", className }: { tone?: "dark" |
         aria-label={fmt(n.open, { n: unread })}
         aria-expanded={open}
         aria-controls={panelId}
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => {
+          if (!open && apiEnabled) void load();
+          setOpen((o) => !o);
+        }}
         className={cn(
           "relative flex size-11 items-center justify-center rounded-full transition-colors",
           tone === "dark" ? "text-white hover:bg-white/10" : "text-forest hover:bg-sand-200",
@@ -56,7 +143,7 @@ export function NotificationBell({ tone = "dark", className }: { tone?: "dark" |
         <Bell aria-hidden className="size-[22px]" />
         {unread > 0 && (
           <span aria-hidden className="absolute right-1 top-1 flex size-[18px] items-center justify-center rounded-full bg-danger-600 text-[13px] font-bold leading-none text-white">
-            {unread}
+            {unread > 9 ? "9+" : unread}
           </span>
         )}
       </button>
@@ -72,11 +159,7 @@ export function NotificationBell({ tone = "dark", className }: { tone?: "dark" |
             <h2 className="font-display text-base font-semibold">{n.title}</h2>
             <div className="flex items-center">
               {unread > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setRead(Object.fromEntries(NOTIFS.map((x) => [x.id, true])))}
-                  className="min-h-11 whitespace-nowrap px-2 text-sm font-semibold text-forest-700"
-                >
+                <button type="button" onClick={markAll} className="min-h-11 whitespace-nowrap px-2 text-sm font-semibold text-forest-700">
                   {n.markAll}
                 </button>
               )}
@@ -85,36 +168,39 @@ export function NotificationBell({ tone = "dark", className }: { tone?: "dark" |
               </button>
             </div>
           </div>
-          <ul className="overflow-y-auto">
-            {NOTIFS.map((x) => {
-              const item = n.items[x.id];
-              const Icon = x.icon;
-              return (
-                <li key={x.id} className="border-b border-line-soft last:border-0">
-                  <Link
-                    href={href(x.path)}
-                    onClick={() => {
-                      setRead((r) => ({ ...r, [x.id]: true }));
-                      setOpen(false);
-                    }}
-                    className={cn("flex gap-3 px-4 py-3 text-ink no-underline hover:bg-sand-100 hover:text-ink", !read[x.id] && "bg-leaf-50")}
-                  >
-                    <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-full", x.tone)}>
-                      <Icon aria-hidden className="size-5" />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="flex items-center gap-2 font-semibold">
-                        {item.title}
-                        {!read[x.id] && <span aria-hidden className="size-2 rounded-full bg-leaf" />}
+          {items.length === 0 ? (
+            <p className="px-4 py-6 text-center text-sm text-ink-muted">{n.empty}</p>
+          ) : (
+            <ul className="overflow-y-auto">
+              {items.map((x) => {
+                const Icon = x.icon;
+                return (
+                  <li key={x.id} className="border-b border-line-soft last:border-0">
+                    <Link
+                      href={href(x.path)}
+                      onClick={() => {
+                        markRead(x.id);
+                        setOpen(false);
+                      }}
+                      className={cn("flex gap-3 px-4 py-3 text-ink no-underline hover:bg-sand-100 hover:text-ink", !x.read && "bg-leaf-50")}
+                    >
+                      <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-full", x.tone)}>
+                        <Icon aria-hidden className="size-5" />
                       </span>
-                      <span className="mt-0.5 block text-sm leading-[1.45] text-ink-soft">{item.text}</span>
-                      <span className="mt-1 block text-[13px] text-ink-muted">{item.when}</span>
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+                      <span className="min-w-0 flex-1">
+                        <span className="flex items-center gap-2 font-semibold">
+                          {x.title}
+                          {!x.read && <span aria-hidden className="size-2 shrink-0 rounded-full bg-leaf" />}
+                        </span>
+                        <span className="mt-0.5 block text-sm leading-[1.45] text-ink-soft">{x.text}</span>
+                        <span className="mt-1 block text-[13px] text-ink-muted">{x.when}</span>
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </div>
       )}
     </div>
