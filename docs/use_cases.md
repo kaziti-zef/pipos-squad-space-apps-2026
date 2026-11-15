@@ -1,4 +1,4 @@
-# AgroRot - Use Case Specification
+# AgriRot - Use Case Specification
 
 ## Table of Contents
 
